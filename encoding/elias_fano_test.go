@@ -1,17 +1,16 @@
 package encoding
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
-func TestEncodeDecode64(t *testing.T) {
-	for i := 1; i < 200; i++ {
-		v, size := Encode64([]uint64{uint64(i)})
-		l, err := Decode64(v, size)
-		if err != nil {
-			t.Errorf("Got unexpected error while decoding %v", err)
-		}
-		if len(l) != 1 || l[0] != uint64(i) {
-			t.Errorf("Decoding failed was expecting a size of 1 got %v and a value of %v got %v", len(l), i, l[0])
-		}
-
+func TestEliasFanoEncode64(t *testing.T) {
+	//01011010000010100001100
+	code := EliasFanoEncoding{}
+	values := []uint64{5, 8, 8, 15, 32}
+	val, length := code.Encode64(values)
+	if !bytes.Equal(val, []byte{90, 10, 24}) || length != 23 {
+		t.Errorf("Elias Fano encoding failed.%v \t %v \n", val, length)
 	}
 }

@@ -4,61 +4,36 @@ import (
 	"math"
 )
 
-// Encode64 encodes a slice of sorted ascending list of uint32 int
-// TODO take into account the fact that the array is sorted to encode things .
-func Encode64(values []uint64) ([]byte, int) {
-	b := MakeBitQueue()
-	for _, v := range values {
-		// N such that such that X between 2^N and 2^(N+1)
-		N := int64(math.Floor(math.Log2(float64(v))))
-		N1 := 1 + N
-		nbBitsOfN1 := int(math.Floor(math.Log2(float64(N1))))
-		// Unary Coding .
-		for i := 0; i < nbBitsOfN1; i++ {
-			b.PushBack(0)
-		}
-		//
-		for i := nbBitsOfN1; i >= 0; i-- {
-			b.PushBack(uint8(N1 >> i))
-		}
-		for i := N1 - 2; i >= 0; i-- {
-			b.PushBack(uint8(v >> i))
-		}
-	}
-	return b.Data(), b.Len()
-}
+// EliasFanoEncoding encodes a list of ascending integers using the Elias Fano Code.
+type EliasFanoEncoding struct{}
 
-// Decode64 encodes a slice of sorted ascending list of uint32 int
-func Decode64(b []byte, size int) ([]uint64, error) {
-	out := make([]uint64, 0)
-	bq, err := MakeBitQueueFromSlice(b, size)
-	if err != nil {
-		return nil, err
+// Encode64 encodes a list of uint64 using EliasFano Code.
+func (EliasFanoEncoding) Encode64(values []uint64) ([]byte, int) {
+	lowBitsQ := MakeBitQueue()
+	highBitsQ := MakeBitQueue()
+	lowerBitCount := uint64(math.Log2(float64(len(values))))
+	lowBitsMask := uint64(1)<<lowerBitCount - 1
+	prev := uint64(0)
+	for i := 0; i < len(values); i++ {
+		v := values[i]
+		highBits := v >> lowerBitCount
+		lowBits := v & lowBitsMask
+		highDelta := highBits - prev
+		for k := lowerBitCount; k > 0; k-- {
+			lowBitsQ.PushBack(uint8(lowBits >> (k - 1)))
+		}
+		if highDelta == 0 {
+			highBitsQ.PushBack(1)
+		} else {
+			for j := uint64(0); j < highDelta; j++ {
+				highBitsQ.PushBack(0)
+			}
+			highBitsQ.PushBack(1)
+		}
+		prev = highBits
 	}
-	for !bq.Empty() {
-		num := uint64(1)
-		len := 1
-		lengthOfLen := 0
-		for {
-			if !bq.Empty() && bq.Pop() == 0 {
-				lengthOfLen++
-			} else {
-				break
-			}
-		}
-		for i := 0; i < lengthOfLen; i++ {
-			len <<= 1
-			if !bq.Empty() && bq.Pop() == 0b1 {
-				len |= 1
-			}
-		}
-		for i := 0; i < len-1; i++ {
-			num <<= 1
-			if !bq.Empty() && bq.Pop() == 0b1 {
-				num |= 1
-			}
-		}
-		out = append(out, num)
+	for !lowBitsQ.Empty() {
+		highBitsQ.PushBack(lowBitsQ.Pop())
 	}
-	return out, nil
+	return highBitsQ.Data(), highBitsQ.Len()
 }
