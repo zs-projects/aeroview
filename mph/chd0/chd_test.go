@@ -3,6 +3,8 @@ package chd0
 import (
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCHD_Get(t *testing.T) {
@@ -13,5 +15,11 @@ func TestCHD_Get(t *testing.T) {
 	}
 
 	chd, _ := from(m)
-	fmt.Println(chd.Get("key=0"))
+
+	for i := 0; i < 10; i++ {
+		value, _ := chd.Get(fmt.Sprintf("key=%d", i))
+		fmt.Println(i, string(value))
+		assert.Equal(t, []byte(fmt.Sprintf("value=%d", i)), value, "fail to assert arg %d", i)
+	}
+
 }
