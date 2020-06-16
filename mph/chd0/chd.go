@@ -85,30 +85,30 @@ func from(kv map[string][]byte) (*CHD, error) {
 
 		r := uint32(1)
 
-		var leftOverKeys []string
-		for len(bucket.keys) != 0 {
-			key := bucket.keys[0]
-			bucket.keys = bucket.keys[1:]
-
+		assignedIndexes := make(map[int]bool)
+		bucketIndex := 0
+		for bucketIndex < len(bucket.keys) {
+			key := bucket.keys[bucketIndex]
 			keyIndex := int(hash(key, r)) % len(keys)
-			if len(keys[keyIndex]) != 0 {
-				leftOverKeys = append(leftOverKeys, key)
-			} else {
-				hashes[bucket.originalIndex] = int32(r)
-				keys[keyIndex] = key
-				values[keyIndex] = kv[key]
-			}
 
-			if len(bucket.keys) == 0 {
-				for _, leftOverKey := range leftOverKeys {
-					bucket.keys = append(bucket.keys, leftOverKey)
-				}
-				leftOverKeys = []string{}
+			// re-init
+			if len(keys[keyIndex]) != 0 || assignedIndexes[keyIndex] {
+				bucketIndex = 0
+				assignedIndexes = map[int]bool{}
 				r++
+				if r > 1000 {
+					return nil, errors.New("fail to generate a CHD")
+				}
+				continue
 			}
-			if r > 1000 {
-				return nil, errors.New("fail to generate a CHD")
-			}
+			bucketIndex++
+			assignedIndexes[keyIndex] = true
+		}
+		for _, key := range bucket.keys {
+			keyIndex := int(hash(key, r)) % len(keys)
+			keys[keyIndex] = key
+			values[keyIndex] = kv[key]
+			hashes[bucket.originalIndex] = int32(r)
 		}
 	}
 
