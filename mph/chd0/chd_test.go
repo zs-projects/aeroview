@@ -8,16 +8,19 @@ import (
 )
 
 func TestCHD_Get(t *testing.T) {
+	nValues := 100
 
 	m := make(map[string][]byte)
-	for i := 0; i < 100; i++ {
+	for i := 0; i < nValues; i++ {
 		m[fmt.Sprintf("key=%d", i)] = []byte(fmt.Sprintf("value=%d", i))
 	}
 
-	chd, _ := from(m)
+	chd, err := From(m)
+	assert.Nil(t, err)
 
-	for i := 0; i < 100; i++ {
-		value, _ := chd.Get(fmt.Sprintf("key=%d", i))
+	for i := 0; i < nValues; i++ {
+		value, hasVal := chd.Get(fmt.Sprintf("key=%d", i))
+		assert.Equal(t, true, hasVal)
 		assert.Equal(t, []byte(fmt.Sprintf("value=%d", i)), value, "fail to assert arg %d", i)
 	}
 }
