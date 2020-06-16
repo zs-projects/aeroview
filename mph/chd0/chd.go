@@ -99,14 +99,14 @@ func From(kv map[string][]byte) (*CHD, error) {
 		}
 	}
 
-	// 3. get free slots so that we can manually assign them to len1 bucket.
+	// 3. get free slots so that we can do some manual assignment where bucket has len 1.
 	freeSlots := make([]int, 0)
 	for i, key := range keys {
 		if len(key) == 0 {
 			freeSlots = append(freeSlots, i)
 		}
 	}
-	// manually assign keys and values to bucket w/ 1 key only.
+	// manually assign keys and values to where bucket has len 1.
 	// manually assigned keys have a negative hash.
 	for _, bucket := range buckets {
 		if bucket == nil || len(bucket.keys) != 1 {
