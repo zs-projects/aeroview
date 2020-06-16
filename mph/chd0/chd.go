@@ -29,53 +29,30 @@ func (chd *CHD) Get(key string) ([]byte, bool) {
 	return chd.values[keyIndex], true
 }
 
-func hash(data string, r uint32) uint32 {
-	var hash uint32 = 0x01000193
-	for _, c := range data {
-		hash ^= uint32(c)
-		hash *= 0x01000193
-	}
-	return hash ^ r
-}
-type bucket struct {
-	originalIndex int
-	keys []string
-}
+func From(kv map[string][]byte) (*CHD, error) {
 
-func from(kv map[string][]byte) (*CHD, error) {
-
-	nBuckets := len(kv)
 	keys := make([]string, len(kv))
 	values := make([][]byte, len(kv))
-	hashes := make([]int32, len(kv))
+
+	nBuckets := len(kv)
+	hashes := make([]int32, nBuckets)
+	buckets := make(buckets, nBuckets)
 
 	if nBuckets == 0 {
 		nBuckets = 1
 	}
 
 	// 1. assign to buckets
-	buckets := make([]*bucket, nBuckets)
 	for key := range kv {
 		bucketIndex := int(hash(key, 0)) % nBuckets
 		if buckets[bucketIndex] == nil {
-			buckets[bucketIndex] = &bucket{
-				originalIndex: bucketIndex,
-				keys:          []string{},
-			}
+			buckets[bucketIndex] = newBucket(bucketIndex)
 		}
 		buckets[bucketIndex].keys = append(buckets[bucketIndex].keys, key)
 	}
 
 	// sort bucket by length, wanna start w/ larger bucket first.
-	sort.Slice(buckets, func(i, j int) bool {
-		if buckets[i] != nil && buckets[j] != nil {
-			return len(buckets[i].keys) > len(buckets[j].keys)
-		} else if buckets[i] != nil {
-			return true
-		} else {
-			return false
-		}
-	})
+	sort.Sort(sort.Reverse(buckets))
 
 	// 2. assign keys to the right place
 	for _, bucket := range buckets {
@@ -135,4 +112,44 @@ func from(kv map[string][]byte) (*CHD, error) {
 		values: values,
 		h:      hashes,
 	}, nil
+}
+
+func hash(data string, r uint32) uint32 {
+	var hash uint32 = 0x01000193
+	for _, c := range data {
+		hash ^= uint32(c)
+		hash *= 0x01000193
+	}
+	return hash ^ r
+}
+
+type bucket struct {
+	originalIndex int
+	keys []string
+}
+
+func newBucket(index int) *bucket{
+	return &bucket{
+		originalIndex: index,
+		keys:          nil,
+	}
+}
+
+type buckets []*bucket
+
+func (b buckets) Len() int {
+	return len(b)
+}
+
+func (b buckets) Less(i, j int) bool {
+	if b[i] != nil && b[j] != nil {
+		return len(b[i].keys) < len(b[j].keys)
+	} else if b[i] != nil {
+		return false
+	}
+	return true
+}
+
+func (b buckets) Swap(i, j int) {
+	b[i], b[j] = b[j], b[i]
 }
