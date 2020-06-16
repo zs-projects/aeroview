@@ -3,6 +3,7 @@ package chd0
 import (
 	"errors"
 	"sort"
+	"zs-project.org/aeroview/mph/farmhash"
 )
 
 const (
@@ -34,7 +35,7 @@ func (chd *CHD) Get(key string) ([]byte, bool) {
 	return chd.values[keyIndex], true
 }
 
-func From(kv map[string][]byte) (*CHD, error) {
+func FromMap(kv map[string][]byte) (*CHD, error) {
 
 	keys := make([]string, len(kv))
 	values := make([][]byte, len(kv))
@@ -126,12 +127,7 @@ func From(kv map[string][]byte) (*CHD, error) {
 }
 
 func hash(data string, r uint32) uint32 {
-	var hash uint32 = 0x01000193
-	for _, c := range data {
-		hash ^= uint32(c)
-		hash *= 0x01000193
-	}
-	return hash ^ r
+	return farmhash.Hash32(data) ^ r
 }
 
 type bucket struct {

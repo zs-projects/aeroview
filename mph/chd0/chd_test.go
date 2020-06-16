@@ -15,7 +15,7 @@ func TestCHD_Get(t *testing.T) {
 		m[fmt.Sprintf("key=%d", i)] = []byte(fmt.Sprintf("value=%d", i))
 	}
 
-	chd, err := From(m)
+	chd, err := FromMap(m)
 	assert.Nil(t, err)
 
 	for i := 0; i < nValues; i++ {
