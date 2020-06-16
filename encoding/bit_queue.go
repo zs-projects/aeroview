@@ -60,9 +60,7 @@ func (m *BitQueue) Pop() uint8 {
 
 // Peek return the next from the queue withouth removing it.
 func (m BitQueue) Peek() uint8 {
-	position := m.cursor / 8
-	offset := m.cursor % 8
-	return m.bits[position] >> (7 - offset) & 0b1
+	return m.Get(m.cursor)
 }
 
 // Empty return true if the queue is empty
@@ -70,7 +68,29 @@ func (m BitQueue) Empty() bool {
 	return m.cursor >= m.Len()
 }
 
-// Data returns the underlying data as []byte.
+// Data returns the a copy of the underlying data as []byte.
 func (m BitQueue) Data() []byte {
-	return m.bits
+	b := make([]byte, len(m.bits))
+	copy(b, m.bits)
+	return b
+}
+
+// Reset resets the queue.
+func (m *BitQueue) Reset() {
+	m.cursor = 0
+}
+
+// Append and the bytes in the slice to the buffer.
+func (m *BitQueue) Append(data []byte, size int) {
+	b, _ := MakeBitQueueFromSlice(data, size)
+	for !b.Empty() {
+		m.PushBack(b.Pop())
+	}
+}
+
+// Get counts the number one ever inserted in the queue.
+func (m BitQueue) Get(i int) uint8 {
+	position := i / 8
+	offset := i % 8
+	return m.bits[position] >> (7 - offset) & 0b1
 }

@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestBitEncodingPushBack(t *testing.T) {
+func TestBitQueuePushBack(t *testing.T) {
 	// Tests that push back is working as expected.
 	b := MakeBitQueue()
 	b.PushBack(1)
@@ -47,5 +47,18 @@ func TestBitEncodingPushBack(t *testing.T) {
 	}
 	if vals[0] != 0 {
 		t.Errorf("Expected the first value of the bitQueue to be 0. got %v", vals[0])
+	}
+}
+
+func TestBitQueueAppend(t *testing.T) {
+	b := MakeBitQueue()
+	b.PushBack(1)
+	b.PushBack(0)
+	b.PushBack(1)
+
+	b.Append([]byte{0b10110100}, 6)
+
+	if b.bits[0] != 0b10110110 || b.bits[1] != 0b10000000 {
+		t.Errorf("BitQueue Append Failed.")
 	}
 }

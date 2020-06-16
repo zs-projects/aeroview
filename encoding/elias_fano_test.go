@@ -5,12 +5,18 @@ import (
 	"testing"
 )
 
-func TestEliasFanoEncode64(t *testing.T) {
+func TestEliasFanoVector(t *testing.T) {
 	//01011010000010100001100
-	code := EliasFanoEncoding{}
 	values := []uint64{5, 8, 8, 15, 32}
-	val, length := code.Encode64(values)
+	vec := MakeEliasFanoVector(values)
+	val, length := vec.Data()
 	if !bytes.Equal(val, []byte{90, 10, 24}) || length != 23 {
 		t.Errorf("Elias Fano encoding failed.%v \t %v \n", val, length)
 	}
+	for i, v := range values {
+		if out, ok := vec.Get(i); !ok || v != out {
+			t.Errorf("Get(%v) method for Elias Fano encoding failed got %v \t expected %v \n", i, out, v)
+		}
+	}
+
 }
