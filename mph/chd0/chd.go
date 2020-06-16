@@ -5,6 +5,11 @@ import (
 	"sort"
 )
 
+const (
+	rNot = 0
+	maxTries = 1000
+)
+
 type CHD struct {
 	keys   []string
 	values [][]byte
@@ -13,9 +18,9 @@ type CHD struct {
 
 func (chd *CHD) Get(key string) ([]byte, bool) {
 	// 1. get the bucket
-	hIndex := int(hash(key, 0)) % len(chd.h)
+	hIndex := int(hash(key, rNot)) % len(chd.h)
 
-	// 2. apply the correct hash.
+	// 2. apply the correct hash on the key
 	var keyIndex int
 	if chd.h[hIndex] < 0 {
 		keyIndex = int(-chd.h[hIndex]) - 1
@@ -34,7 +39,9 @@ func From(kv map[string][]byte) (*CHD, error) {
 	keys := make([]string, len(kv))
 	values := make([][]byte, len(kv))
 
-	nBuckets := len(kv)
+	// there is a tradeoff here to make in the number of bucket we want.
+	// more buckets means faster to build, but more memory to keep the structure in place.
+	nBuckets := len(kv) / 2
 	hashes := make([]int32, nBuckets)
 	buckets := make(buckets, nBuckets)
 
@@ -42,9 +49,9 @@ func From(kv map[string][]byte) (*CHD, error) {
 		nBuckets = 1
 	}
 
-	// 1. assign to buckets
+	// 1. assign the different keys to buckets
 	for key := range kv {
-		bucketIndex := int(hash(key, 0)) % nBuckets
+		bucketIndex := int(hash(key, rNot)) % nBuckets
 		if buckets[bucketIndex] == nil {
 			buckets[bucketIndex] = newBucket(bucketIndex)
 		}
@@ -54,7 +61,9 @@ func From(kv map[string][]byte) (*CHD, error) {
 	// sort bucket by length, wanna start w/ larger bucket first.
 	sort.Sort(sort.Reverse(buckets))
 
-	// 2. assign keys to the right place
+	// 2. choose the correct hashes for buckets with conflict.
+	// - when finding non-conflicting hash, write it down.
+	// - assign keys and values to the right place
 	for _, bucket := range buckets {
 		if len(bucket.keys) == 1 {
 			break
@@ -68,12 +77,12 @@ func From(kv map[string][]byte) (*CHD, error) {
 			key := bucket.keys[bucketIndex]
 			keyIndex := int(hash(key, r)) % len(keys)
 
-			// re-init
+			// if conflict remains, re-init
 			if len(keys[keyIndex]) != 0 || assignedIndexes[keyIndex] {
 				bucketIndex = 0
 				assignedIndexes = map[int]bool{}
 				r++
-				if r > 1000 {
+				if r > maxTries {
 					return nil, errors.New("fail to generate a CHD")
 				}
 				continue
@@ -81,6 +90,7 @@ func From(kv map[string][]byte) (*CHD, error) {
 			bucketIndex++
 			assignedIndexes[keyIndex] = true
 		}
+		// stable config was found, write down keys, values and the stable r.
 		for _, key := range bucket.keys {
 			keyIndex := int(hash(key, r)) % len(keys)
 			keys[keyIndex] = key
@@ -96,7 +106,8 @@ func From(kv map[string][]byte) (*CHD, error) {
 			freeSlots = append(freeSlots, i)
 		}
 	}
-
+	// manually assign keys and values to bucket w/ 1 key only.
+	// manually assigned keys have a negative hash.
 	for _, bucket := range buckets {
 		if bucket == nil || len(bucket.keys) != 1 {
 			continue
@@ -137,6 +148,7 @@ func newBucket(index int) *bucket{
 
 type buckets []*bucket
 
+// Implements the Sort interface.
 func (b buckets) Len() int {
 	return len(b)
 }
