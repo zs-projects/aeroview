@@ -4,12 +4,12 @@ import (
 	"math"
 )
 
-// EliasEncoding encode positive integers using elias code.
-type EliasEncoding struct{}
+// EliasDeltaEncoding encode positive integers using elias code.
+type EliasDeltaEncoding struct{}
 
 // Encode64 encodes a slice of sorted ascending list of uint32 int
 // TODO take into account the fact that the array is sorted to encode things .
-func (EliasEncoding) Encode64(v uint64) ([]byte, int) {
+func (EliasDeltaEncoding) Encode64(v uint64) ([]byte, int) {
 	b := MakeBitQueue()
 	// N such that such that X between 2^N and 2^(N+1)
 	N := int64(math.Floor(math.Log2(float64(v))))
@@ -30,7 +30,7 @@ func (EliasEncoding) Encode64(v uint64) ([]byte, int) {
 }
 
 // Decode64 encodes a slice of sorted ascending list of uint32 int
-func (EliasEncoding) Decode64(b []byte, size int) (uint64, error) {
+func (EliasDeltaEncoding) Decode64(b []byte, size int) (uint64, error) {
 	bq, err := MakeBitQueueFromSlice(b, size)
 	if err != nil {
 		return 0, err

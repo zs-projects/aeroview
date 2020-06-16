@@ -3,7 +3,7 @@ package encoding
 import "testing"
 
 func TestEncodeDecode64(t *testing.T) {
-	code := EliasEncoding{}
+	code := EliasDeltaEncoding{}
 	for i := 1; i < 200; i++ {
 		v, size := code.Encode64(uint64(i))
 		l, err := code.Decode64(v, size)
