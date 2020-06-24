@@ -69,17 +69,21 @@ func recsplitWorker(wg *sync.WaitGroup, splits chan recsplitBucket, results chan
 			left := recsplitBucket{
 				keys:    lKeys,
 				parents: make([]uint32, len(b.parents)),
-				isLeft:  true,
+				isLeft:  make([]bool, len(b.isLeft)),
 			}
 			right := recsplitBucket{
 				keys:    rKeys,
 				parents: make([]uint32, len(b.parents)),
-				isLeft:  false,
+				isLeft:  make([]bool, len(b.isLeft)),
 			}
 			copy(right.parents, b.parents)
+			copy(right.isLeft, b.isLeft)
 			copy(left.parents, b.parents)
+			copy(left.isLeft, b.isLeft)
 			right.parents = append(right.parents, uint32(r))
 			left.parents = append(left.parents, uint32(r))
+			right.isLeft = append(right.isLeft, false)
+			left.isLeft = append(left.isLeft, true)
 			splits <- right
 			splits <- left
 		}
@@ -90,7 +94,7 @@ func recsplitWorker(wg *sync.WaitGroup, splits chan recsplitBucket, results chan
 type recsplitBucket struct {
 	keys    []string
 	parents []uint32
-	isLeft  bool
+	isLeft  []bool
 }
 type finalRecsplitBucket struct {
 	recsplitBucket
