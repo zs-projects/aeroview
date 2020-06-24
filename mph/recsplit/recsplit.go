@@ -2,6 +2,7 @@ package recsplit
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"zs-project.org/aeroview/mph/farmhash"
 	"zs-project.org/aeroview/mph/utils"
@@ -13,13 +14,13 @@ const (
 )
 
 func fromMap(data map[string][]byte, nbWorkers int) {
-	_, splits, results := makeWorkerPool(5)
 	nBuckets := len(data) / 100
 	partitioner := func(data string) int {
 		return hash(data, rNot)
 	}
 	// 1. Assign data to buckets.
 	buckets := utils.AssignToBuckets(partitioner, data, nBuckets)
+	splits, results := makeWorkerPool(5, len(buckets))
 	overflows := make(map[int]struct{})
 	for i, b := range buckets {
 		// 2. Check for overflows.
@@ -44,27 +45,37 @@ func fromMap(data map[string][]byte, nbWorkers int) {
 	// 6. Reconstruct the mph.
 }
 
-func makeWorkerPool(nbWokers int) (*sync.WaitGroup, chan<- recsplitBucket, <-chan finalRecsplitBucket) {
+func makeWorkerPool(nbWokers int, initialWorkCount int) (chan<- recsplitBucket, <-chan finalRecsplitBucket) {
 	var wg sync.WaitGroup
-	// TO FIGURE OUT : Where to close this channel.
+	work := int64(initialWorkCount)
 	splits := make(chan recsplitBucket)
-	// TO FIGURE OUT : Where to close this channel.
 	results := make(chan finalRecsplitBucket)
 	for i := 0; i < nbWokers; i++ {
 		wg.Add(1)
-		go recsplitWorker(&wg, splits, results)
+		go recsplitWorker(&wg, &work, splits, results)
 	}
-	return &wg, splits, results
+	go func() {
+		for {
+			if atomic.LoadInt64(&work) == 0 {
+				close(splits)
+				break
+			}
+		}
+		wg.Wait()
+		close(results)
+	}()
+	return splits, results
 }
 
-func recsplitWorker(wg *sync.WaitGroup, splits chan recsplitBucket, results chan<- finalRecsplitBucket) {
-	// NOTE: for now this channel is closed nowhere. This will loop forever.
+func recsplitWorker(wg *sync.WaitGroup, workCount *int64, splits chan recsplitBucket, results chan<- finalRecsplitBucket) {
 	for b := range splits {
 		if len(b.keys) <= 8 {
 			r := b.bruteForceMPH()
 			b.parents = append(b.parents, uint32(r))
+			atomic.AddInt64(workCount, -1)
 			results <- finalRecsplitBucket{b}
 		} else {
+			atomic.AddInt64(workCount, -1)
 			r, lKeys, rKeys := b.partitionKeys()
 			left := recsplitBucket{
 				keys:    lKeys,
@@ -85,7 +96,9 @@ func recsplitWorker(wg *sync.WaitGroup, splits chan recsplitBucket, results chan
 			right.isLeft = append(right.isLeft, false)
 			left.isLeft = append(left.isLeft, true)
 			splits <- right
+			atomic.AddInt64(workCount, +1)
 			splits <- left
+			atomic.AddInt64(workCount, +1)
 		}
 	}
 	wg.Done()
