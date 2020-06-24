@@ -3,11 +3,13 @@ package chd0
 import (
 	"errors"
 	"sort"
+
 	"zs-project.org/aeroview/mph/farmhash"
+	"zs-project.org/aeroview/mph/utils"
 )
 
 const (
-	rNot = 0
+	rNot     = 0
 	maxTries = 1000
 )
 
@@ -26,7 +28,7 @@ func (chd *CHD) Get(key string) ([]byte, bool) {
 	if chd.h[hIndex] < 0 {
 		keyIndex = int(-chd.h[hIndex]) - 1
 	} else {
-		keyIndex = int(hash(key, uint32(chd.h[hIndex]))) % len(chd.keys)
+		keyIndex = hash(key, uint32(chd.h[hIndex])) % len(chd.keys)
 	}
 
 	if chd.keys[keyIndex] != key {
@@ -44,7 +46,7 @@ func FromMap(kv map[string][]byte) (*CHD, error) {
 	// more buckets means faster to build, but more memory to keep the structure in place.
 	nBuckets := len(kv) / 2
 	hashes := make([]int32, nBuckets)
-	buckets := make(buckets, nBuckets)
+	buckets := make(utils.Buckets, nBuckets)
 
 	if nBuckets == 0 {
 		nBuckets = 1
@@ -52,11 +54,11 @@ func FromMap(kv map[string][]byte) (*CHD, error) {
 
 	// 1. assign the different keys to buckets
 	for key := range kv {
-		bucketIndex := int(hash(key, rNot)) % nBuckets
+		bucketIndex := hash(key, rNot) % nBuckets
 		if buckets[bucketIndex] == nil {
-			buckets[bucketIndex] = newBucket(bucketIndex)
+			buckets[bucketIndex] = utils.NewBucket(bucketIndex)
 		}
-		buckets[bucketIndex].keys = append(buckets[bucketIndex].keys, key)
+		buckets[bucketIndex].Keys = append(buckets[bucketIndex].Keys, key)
 	}
 
 	// sort bucket by length, wanna start w/ larger bucket first.
@@ -66,7 +68,7 @@ func FromMap(kv map[string][]byte) (*CHD, error) {
 	// - when finding non-conflicting hash, write it down.
 	// - assign keys and values to the right place
 	for _, bucket := range buckets {
-		if len(bucket.keys) == 1 {
+		if len(bucket.Keys) == 1 {
 			break
 		}
 
@@ -74,9 +76,9 @@ func FromMap(kv map[string][]byte) (*CHD, error) {
 
 		assignedIndexes := make(map[int]bool)
 		bucketIndex := 0
-		for bucketIndex < len(bucket.keys) {
-			key := bucket.keys[bucketIndex]
-			keyIndex := int(hash(key, r)) % len(keys)
+		for bucketIndex < len(bucket.Keys) {
+			key := bucket.Keys[bucketIndex]
+			keyIndex := hash(key, r) % len(keys)
 
 			// if conflict remains, re-init
 			if len(keys[keyIndex]) != 0 || assignedIndexes[keyIndex] {
@@ -92,11 +94,11 @@ func FromMap(kv map[string][]byte) (*CHD, error) {
 			assignedIndexes[keyIndex] = true
 		}
 		// stable config was found, write down keys, values and the stable r.
-		for _, key := range bucket.keys {
-			keyIndex := int(hash(key, r)) % len(keys)
+		for _, key := range bucket.Keys {
+			keyIndex := hash(key, r) % len(keys)
 			keys[keyIndex] = key
 			values[keyIndex] = kv[key]
-			hashes[bucket.originalIndex] = int32(r)
+			hashes[bucket.OriginalIndex] = int32(r)
 		}
 	}
 
@@ -110,14 +112,14 @@ func FromMap(kv map[string][]byte) (*CHD, error) {
 	// manually assign keys and values to where bucket has len 1.
 	// manually assigned keys have a negative hash.
 	for _, bucket := range buckets {
-		if bucket == nil || len(bucket.keys) != 1 {
+		if bucket == nil || len(bucket.Keys) != 1 {
 			continue
 		}
 		slotIndex := freeSlots[0]
 		freeSlots = freeSlots[1:]
-		hashes[bucket.originalIndex] = int32(-slotIndex - 1)
-		keys[slotIndex] = bucket.keys[0]
-		values[slotIndex] = kv[bucket.keys[0]]
+		hashes[bucket.OriginalIndex] = int32(-slotIndex - 1)
+		keys[slotIndex] = bucket.Keys[0]
+		values[slotIndex] = kv[bucket.Keys[0]]
 	}
 	return &CHD{
 		keys:   keys,
@@ -126,38 +128,6 @@ func FromMap(kv map[string][]byte) (*CHD, error) {
 	}, nil
 }
 
-func hash(data string, r uint32) uint32 {
-	return farmhash.Hash32(data) ^ r
-}
-
-type bucket struct {
-	originalIndex int
-	keys []string
-}
-
-func newBucket(index int) *bucket{
-	return &bucket{
-		originalIndex: index,
-		keys:          nil,
-	}
-}
-
-type buckets []*bucket
-
-// Implements the Sort interface.
-func (b buckets) Len() int {
-	return len(b)
-}
-
-func (b buckets) Less(i, j int) bool {
-	if b[i] != nil && b[j] != nil {
-		return len(b[i].keys) < len(b[j].keys)
-	} else if b[i] != nil {
-		return false
-	}
-	return true
-}
-
-func (b buckets) Swap(i, j int) {
-	b[i], b[j] = b[j], b[i]
+func hash(data string, r uint32) int {
+	return int(farmhash.Hash32(data) ^ r)
 }
