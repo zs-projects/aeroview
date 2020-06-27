@@ -76,6 +76,7 @@ func FromMap(data map[string][]byte, nbWorkers int) MPH {
 			rb := recsplitBucket{
 				keys:    b.Keys,
 				parents: []uint32{uint32(b.OriginalIndex)},
+				bucket:  b.OriginalIndex,
 			}
 			splits <- rb
 		}
@@ -135,6 +136,7 @@ type recsplitBucket struct {
 	keys    []string
 	parents []uint32
 	isLeft  []bool
+	bucket  int
 }
 type finalRecsplitBucket struct {
 	recsplitBucket
@@ -149,11 +151,11 @@ func (b recsplitBucket) partitionKeys() (int, []string, []string) {
 		lPos := 0
 		rPos := 0
 		for _, key := range b.keys {
-			if hash(key, r) < s {
+			if hash(key, r)%len(b.keys) < s {
 				lKeys[lPos] = key
 				lPos++
 			} else {
-				rKeys[lPos] = key
+				rKeys[rPos] = key
 				rPos++
 			}
 		}
