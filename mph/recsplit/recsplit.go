@@ -49,27 +49,32 @@ func FromMap(data map[string][]byte, nbWorkers int) MPH {
 		}
 	}
 	// 5. Collect the finalRecSplitbuckets.
-	fBuckets := make([]finalRecsplitBucket, 0)
+	fBuckets := make([]recsplitLeaf, 0)
 	// NOTE: for now this channel is closed nowhere. This will loop forever.
 	for res := range results {
 		fBuckets = append(fBuckets, res)
 	}
 	// 6. Reconstruct the mph.
-	return fromFinalRecSplits(fBuckets, nBuckets)
+	return mphFromRecsplitLeafs(fBuckets, nBuckets)
 }
 
-func makeWorkerPool(nbWokers int, initialWorkCount int) (chan<- recsplitBucket, <-chan finalRecsplitBucket) {
+func makeWorkerPool(nbWokers int, initialWorkCount int) (chan<- recsplitBucket, <-chan recsplitLeaf) {
 	var wg sync.WaitGroup
 	work := int64(initialWorkCount)
 	splits := make(chan recsplitBucket)
-	results := make(chan finalRecsplitBucket)
+	results := make(chan recsplitLeaf)
 	for i := 0; i < nbWokers; i++ {
 		wg.Add(1)
 		go recsplitWorker(&wg, &work, splits, results)
 	}
+	go monitorWorkAndCloseChannels(&wg, &work, splits, results)
+	return splits, results
+}
+
+func monitorWorkAndCloseChannels(wg *sync.WaitGroup, work *int64, splits chan recsplitBucket, results chan recsplitLeaf) {
 	go func() {
 		for {
-			if atomic.LoadInt64(&work) == 0 {
+			if atomic.LoadInt64(work) == 0 {
 				close(splits)
 				break
 			}
@@ -77,16 +82,15 @@ func makeWorkerPool(nbWokers int, initialWorkCount int) (chan<- recsplitBucket, 
 		wg.Wait()
 		close(results)
 	}()
-	return splits, results
 }
 
-func recsplitWorker(wg *sync.WaitGroup, workCount *int64, splits chan recsplitBucket, results chan<- finalRecsplitBucket) {
+func recsplitWorker(wg *sync.WaitGroup, workCount *int64, splits chan recsplitBucket, results chan<- recsplitLeaf) {
 	for b := range splits {
 		if len(b.keys) <= 5 {
 			r := b.bruteForceMPH()
 			b.parents = append(b.parents, uint32(r))
 			atomic.AddInt64(workCount, -1)
-			results <- finalRecsplitBucket{b}
+			results <- recsplitLeaf{b}
 		} else {
 			left, right := b.split()
 			splits <- right
@@ -99,13 +103,13 @@ func recsplitWorker(wg *sync.WaitGroup, workCount *int64, splits chan recsplitBu
 	wg.Done()
 }
 
-func fromFinalRecSplits(res []finalRecsplitBucket, nbBuckets int) MPH {
+func mphFromRecsplitLeafs(res []recsplitLeaf, nbBuckets int) MPH {
 	mph := MPH{
 		splits: make([][]node, nbBuckets),
 	}
 	for _, r := range res {
 		// the first element is supposed to be a bucket.
-		bucket := r.parents[0]
+		bucket := r.bucket
 		if mph.splits[bucket] != nil {
 			mph.splits[bucket] = make([]node, 0, 2^(len(r.parents)-1))
 		}
@@ -138,9 +142,10 @@ type recsplitBucket struct {
 	isLeft  []bool
 	bucket  int
 }
-type finalRecsplitBucket struct {
+type recsplitLeaf struct {
 	recsplitBucket
 }
+type recsplitLeafs []recsplitLeaf
 
 func (b recsplitBucket) split() (recsplitBucket, recsplitBucket) {
 	r, lKeys, rKeys := b.partitionKeys()

@@ -2,15 +2,36 @@ package recsplit
 
 import (
 	"sync"
-	"sync/atomic"
 	"testing"
 )
+
+func TestMPHFromRecsplitLeafs(t *testing.T) {
+	var wg sync.WaitGroup
+	workCount := int64(1)
+	splits := make(chan recsplitBucket, 3)
+	results := make(chan recsplitLeaf, 3)
+	b := recsplitBucket{
+		keys:    []string{"toto", "tata", "titi", "test", "tardif", "toff", "tiff", "tall", "health", "append", "count"},
+		parents: []uint32{},
+		isLeft:  []bool{},
+		bucket:  0,
+	}
+	splits <- b
+	wg.Add(1)
+	go monitorWorkAndCloseChannels(&wg, &workCount, splits, results)
+	go recsplitWorker(&wg, &workCount, splits, results)
+	res := make([]recsplitLeaf, 0)
+	for r := range results {
+		res = append(res, r)
+	}
+	mphFromRecsplitLeafs(res, 1)
+}
 
 func TestRecsplitWorker(t *testing.T) {
 	var wg sync.WaitGroup
 	workCount := int64(1)
 	splits := make(chan recsplitBucket, 3)
-	results := make(chan finalRecsplitBucket, 3)
+	results := make(chan recsplitLeaf, 3)
 	b := recsplitBucket{
 		keys:    []string{"toto", "tata", "titi", "test", "tardif", "toff", "tiff", "tall", "health", "append", "count"},
 		parents: []uint32{5, 7},
@@ -19,17 +40,8 @@ func TestRecsplitWorker(t *testing.T) {
 	}
 	splits <- b
 	wg.Add(1)
-	go func() {
-		for {
-			if atomic.LoadInt64(&workCount) == 0 {
-				close(splits)
-				return
-			}
-		}
-	}()
+	go monitorWorkAndCloseChannels(&wg, &workCount, splits, results)
 	go recsplitWorker(&wg, &workCount, splits, results)
-	wg.Wait()
-	close(results)
 	count := 0
 	for r := range results {
 		count++
