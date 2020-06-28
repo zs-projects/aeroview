@@ -10,4 +10,39 @@
 		"go.autocompleteUnimportedPackages": true,
 		"go.formatTool": "goimports"
 	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Launch file",
+				"type": "go",
+				"request": "launch",
+				"mode": "debug",
+				"program": "${file}"
+			},
+			{
+				"name": "Launch",
+				"type": "go",
+				"request": "launch",
+				"mode": "auto",
+				"program": "${fileDirname}",
+				"env": {},
+				"args": []
+			}
+		]
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "Build",
+				"type": "shell",
+				"command": "go build ./...",
+				"group": {
+					"kind": "build",
+					"isDefault": true
+				}
+			}
+		]
+	}
 }
