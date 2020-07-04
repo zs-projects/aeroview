@@ -10,8 +10,9 @@ func TestMPHFromRecsplitLeafs(t *testing.T) {
 	workCount := int64(1)
 	splits := make(chan recsplitBucket, 3)
 	results := make(chan recsplitLeaf, 3)
+	keys := []string{"toto", "tata", "titi", "test", "tardif", "toff", "tiff", "tall", "health", "append", "count"}
 	b := recsplitBucket{
-		keys:    []string{"toto", "tata", "titi", "test", "tardif", "toff", "tiff", "tall", "health", "append", "count"},
+		keys:    keys,
 		parents: []uint32{},
 		isLeft:  []bool{},
 		bucket:  0,
@@ -24,7 +25,17 @@ func TestMPHFromRecsplitLeafs(t *testing.T) {
 	for r := range results {
 		res = append(res, r)
 	}
-	mphFromRecsplitLeafs(res, 1)
+	recs := mphFromRecsplitLeafs(res, 1)
+	collisions := make([]bool, len(keys))
+	for _, key := range keys {
+		i := recs.GetKey(key)
+		if collisions[i] {
+			t.Errorf("Found collision for value %v that hashed at %v", key, i)
+		} else {
+			collisions[i] = true
+		}
+	}
+
 }
 
 func TestRecsplitWorker(t *testing.T) {

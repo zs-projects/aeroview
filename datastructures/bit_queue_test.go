@@ -1,4 +1,4 @@
-package encoding
+package datastructures
 
 import (
 	"testing"
@@ -60,5 +60,34 @@ func TestBitQueueAppend(t *testing.T) {
 
 	if b.bits[0] != 0b10110110 || b.bits[1] != 0b10000000 {
 		t.Errorf("BitQueue Append Failed.")
+	}
+}
+
+func TestBitQueueToggle(t *testing.T) {
+	b := MakeBitQueue()
+	b.PushBack(1)
+	b.PushBack(0)
+	b.PushBack(1)
+
+	b.Append([]byte{0b10110100}, 6)
+	b.Toggle(0)
+	b.Toggle(3)
+	b.Toggle(4)
+	if b.bits[0] != 0b00101110 || b.bits[1] != 0b10000000 {
+		t.Errorf("BitQueue Set Failed.")
+	}
+}
+
+func TestBitQueueHigh(t *testing.T) {
+	b := MakeBitQueue()
+	b.PushBack(1)
+	b.PushBack(0)
+	b.PushBack(1)
+
+	b.Append([]byte{0b10110100}, 6)
+	b.High(7)
+	b.High(0)
+	if b.bits[0] != 0b10110111 || b.bits[1] != 0b10000000 {
+		t.Errorf("BitQueue Set Failed.")
 	}
 }

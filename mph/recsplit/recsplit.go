@@ -1,6 +1,7 @@
 package recsplit
 
 import (
+	"math"
 	"sync"
 	"sync/atomic"
 
@@ -13,19 +14,46 @@ const (
 	maxRetries = 2 << 8
 )
 
-type MPH struct {
+// Recsplit represents a minimal perfect hash function found using the recsplit algorithm.
+type Recsplit struct {
+	values [][]byte
 	// One binary tree per bucket.
 	splits [][]node
 }
 type node struct {
 	r      uint32
+	nbKeys int
 	isLeaf bool
+}
+
+// GetKey Returns the looked for value
+func (r Recsplit) GetKey(s string) int {
+	// 1. Determine bucket.
+	bucket := hash(s, 0) % len(r.splits)
+	k := 0
+	pos := 0
+	for {
+		n := r.splits[bucket][k]
+		v := hash(s, n.r) % n.nbKeys
+		if n.isLeaf {
+			return pos + v
+		}
+		if v < n.nbKeys/2 {
+			k = 2*k + 1
+		} else {
+			k = 2 * (k + 1)
+			pos += n.nbKeys / 2
+		}
+	}
+
 }
 
 // FromMap computes a minimal perfect hashing function over the map that is provided as an argument.
 // nbWorkes controls the number of parallel go-routines to be launched to do the work.
-func FromMap(data map[string][]byte, nbWorkers int) MPH {
+func FromMap(data map[string][]byte, nbWorkers int) Recsplit {
+	values := make([][]byte, len(data))
 	nBuckets := len(data) / 100
+
 	partitioner := func(data string) int {
 		return hash(data, rNot)
 	}
@@ -55,7 +83,15 @@ func FromMap(data map[string][]byte, nbWorkers int) MPH {
 		fBuckets = append(fBuckets, res)
 	}
 	// 6. Reconstruct the mph.
-	return mphFromRecsplitLeafs(fBuckets, nBuckets)
+	mph := mphFromRecsplitLeafs(fBuckets, nBuckets)
+	// 7. Build de the map
+	for k, v := range data {
+		// Inneficient but should work.
+		i := mph.GetKey(k)
+		values[i] = v
+	}
+	mph.values = values
+	return mph
 }
 
 func makeWorkerPool(nbWokers int, initialWorkCount int) (chan<- recsplitBucket, <-chan recsplitLeaf) {
@@ -103,32 +139,30 @@ func recsplitWorker(wg *sync.WaitGroup, workCount *int64, splits chan recsplitBu
 	wg.Done()
 }
 
-func mphFromRecsplitLeafs(res []recsplitLeaf, nbBuckets int) MPH {
-	mph := MPH{
+func mphFromRecsplitLeafs(res []recsplitLeaf, nbBuckets int) Recsplit {
+	mph := Recsplit{
 		splits: make([][]node, nbBuckets),
 	}
 	for _, r := range res {
 		// the first element is supposed to be a bucket.
 		bucket := r.bucket
-		if mph.splits[bucket] != nil {
-			mph.splits[bucket] = make([]node, 0, 2^(len(r.parents)-1))
+		size := int(math.Pow(2, float64(len(r.parents)))) - 1
+		if mph.splits[bucket] == nil {
+			mph.splits[bucket] = make([]node, size)
 		}
 		// If the lenght of the array is not big enough to handle the whole tree, we allocate a new one.
-		if len(mph.splits[bucket]) <= 2^len(r.parents) {
-			dest := make([]node, 2^(len(r.parents)-1))
+		if len(mph.splits[bucket]) <= size {
+			dest := make([]node, size)
 			copy(dest, mph.splits[bucket])
 			mph.splits[bucket] = dest
 		}
-		for k, n := range r.parents[1:] {
-			pos := 2 ^ k - 1
-			if !r.isLeft[k+1] {
+		for k, n := range r.parents {
+			pos := int(math.Pow(2, float64(k))) - 1
+			if k != 0 && k <= len(r.isLeft) && !r.isLeft[k-1] {
 				pos++
 			}
-
-			mph.splits[bucket][pos] = node{
-				r: n,
-			}
-			if k == len(r.parents[1:])-1 {
+			mph.splits[bucket][pos] = node{r: n, nbKeys: len(r.keys)}
+			if k == len(r.isLeft) {
 				mph.splits[bucket][pos].isLeaf = true
 			}
 		}

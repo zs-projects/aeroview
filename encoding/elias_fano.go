@@ -2,20 +2,22 @@ package encoding
 
 import (
 	"math"
+
+	"zs-project.org/aeroview/datastructures"
 )
 
 // EliasFanoVector encodes a list of ascending integers using the Elias Fano Code.
 type EliasFanoVector struct {
-	highBits     BitQueue
-	lowBits      BitQueue
+	highBits     datastructures.BitQueue
+	lowBits      datastructures.BitQueue
 	nElements    int // the number of elements in the data structure.
 	lowBitsCount int // The number of bits used to encode the low bits.
 }
 
 // MakeEliasFanoVector encodes a list of uint64 using EliasFano Code.
 func MakeEliasFanoVector(values []uint64) EliasFanoVector {
-	lowBitsQ := MakeBitQueue()
-	highBitsQ := MakeBitQueue()
+	lowBitsQ := datastructures.MakeBitQueue()
+	highBitsQ := datastructures.MakeBitQueue()
 	lowerBitCount := uint64(math.Log2(float64(len(values))))
 	lowBitsMask := uint64(1)<<lowerBitCount - 1
 	prev := uint64(0)
@@ -53,9 +55,9 @@ func (e EliasFanoVector) Len() int {
 
 // Data returns the raw elias-fano encoded array.
 func (e EliasFanoVector) Data() ([]byte, int) {
-	result, _ := MakeBitQueueFromSlice(e.highBits.Data(), e.highBits.Len())
+	result, _ := datastructures.MakeBitQueueFromSlice(e.highBits.Data(), e.highBits.Len())
 	result.Append(e.lowBits.Data(), e.lowBits.Len())
-	return result.bits, result.Len()
+	return result.Data(), result.Len()
 }
 
 // Get Returns the element at index i

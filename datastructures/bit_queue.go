@@ -1,4 +1,4 @@
-package encoding
+package datastructures
 
 import (
 	"fmt"
@@ -88,9 +88,29 @@ func (m *BitQueue) Append(data []byte, size int) {
 	}
 }
 
-// Get counts the number one ever inserted in the queue.
+// Get return the bit value at position int
 func (m BitQueue) Get(i int) uint8 {
 	position := i / 8
 	offset := i % 8
 	return m.bits[position] >> (7 - offset) & 0b1
+}
+
+// Set set the bit balue at position i
+// does nothing if i is out of bound
+func (m BitQueue) Toggle(i int) {
+	position := i / 8
+	if position < len(m.bits) {
+		offset := i % 8
+		m.bits[position] = m.bits[position] ^ 1<<(7-offset)
+	}
+}
+
+// Set set the bit balue at position i
+// does nothing if i is out of bound
+func (m BitQueue) High(i int) {
+	position := i / 8
+	if position < len(m.bits) {
+		offset := i % 8
+		m.bits[position] = m.bits[position] | 1<<(7-offset)
+	}
 }
