@@ -46,7 +46,7 @@ func MakeFBTreeFromLeafs(tls []TreeLeaf) FBTree {
 		position := 0
 		for k, n := range parents {
 			// 1. Set the node in it's correct position
-			position = 2 * position
+			position = 2*position + int(math.Min(1, float64(k)))
 			if k > 0 && path[k-1] {
 				position++
 			}
@@ -57,9 +57,9 @@ func MakeFBTreeFromLeafs(tls []TreeLeaf) FBTree {
 				// that the current node has at least one additional child.
 				// let's put a high bit at that position.
 				if path[k] {
-					tr.structure.High(position + 1)
+					tr.structure.High(2*position + 1)
 				} else {
-					tr.structure.High(position)
+					tr.structure.High(2 * position)
 				}
 			}
 		}
