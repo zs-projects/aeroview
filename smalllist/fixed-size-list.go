@@ -1,69 +1,63 @@
 package smalllist
 
-type IntSize int32
 
-const (
-	length8  IntSize = 8
-	length16 IntSize = 16
-	length32 IntSize = 32
-)
+const blockSize = 64
 
-type IntMask int64
-
-const (
-	bit8Mask  IntMask = 0xFF
-	bit16Mask IntMask = 0xFFFF
-	bit32Mask IntMask = 0xFFFFFFFF
-)
-
-type FixedSizedList struct {
-	list              []int64
-	nElementsPerBlock int
-	intSize           IntSize
-	mask              IntMask
+type FixedSized struct {
+	 size uint64
+	 smalllist []uint64
 }
 
-func From(xs []int, intSize IntSize) FixedSizedList {
+func FromSlice(xs []int) *FixedSized {
+	return nil
+}
 
-	var mask IntMask
-	switch intSize {
-	case length8:
-		mask = bit8Mask
-	case length16:
-		mask = bit16Mask
-	case length32:
-		mask = bit32Mask
+func (f *FixedSized) Get(idx int) uint64 {
+	// find block and offset.
+	block, offset := f.blockAndOffset(idx)
 
+	// if overflow
+	var x uint64
+	if offset + f.size > blockSize {
+		// size of the overflow
+		overflow := (offset + f.size) % blockSize
+		// select of msb of size  (blockSize - offset)
+		msb := (f.smalllist[block] >> offset) <<  overflow
+		// select of lsb of size of overflow in next block
+		lsb := selectKBits(f.smalllist[block + 1], overflow)
+		x |= msb
+		x |= lsb
+	} else {
+		x = selectKBits(f.smalllist[block] >> offset, f.size)
 	}
+	return x
+}
 
-	nElementsPerBlock := 64 / int(intSize)
-	newSize := ((len(xs) * int(intSize)) + 63) / 64
-	fixedSize := make([]int64, newSize)
-	for i, x := range xs {
-		block := i / nElementsPerBlock
-		positionInBlock := i % nElementsPerBlock
-		newVal := int64(x << (positionInBlock * int(intSize)))
-		fixedSize[block] |= newVal
+func (f *FixedSized) Set(val uint64, idx int) {
+	// find block and offset.
+	block, offset := f.blockAndOffset(idx)
+
+	// if overflow
+	if offset + f.size > blockSize {
+		// size of the overflow
+		overflow := (offset + f.size) % blockSize
+		// most significant bits only, remove overflow bits
+		msb := val >> (overflow)
+		// least significant bits only
+		lsb := selectKBits(val, overflow)
+		f.smalllist[block] |= msb << offset
+		f.smalllist[block + 1] |= lsb
+	} else {
+		f.smalllist[block] |= val << offset
 	}
-	return FixedSizedList{
-		list:              fixedSize,
-		nElementsPerBlock: nElementsPerBlock,
-		intSize:           intSize,
-		mask:              mask,
-	}
 }
 
-func (f *FixedSizedList) Get(index int) int {
-	newIndex := index / (f.nElementsPerBlock)
-	positionInBlock := index % f.nElementsPerBlock
-	element := f.list[newIndex] >> (positionInBlock * int(f.intSize))
-	return int(element & int64(f.mask))
+func (f *FixedSized) blockAndOffset(idx int) (uint64, uint64) {
+	block := (uint64(idx) * f.size) / blockSize
+	offset := (uint64(idx) * f.size) % blockSize
+	return block, offset
 }
 
-func (f *FixedSizedList) Set(index int, value int) {
-	newIndex := index / (f.nElementsPerBlock)
-	positionInBlock := index % f.nElementsPerBlock
-	newVal := int64(value << (positionInBlock * int(f.intSize)))
-	f.list[newIndex] |= newVal
+func selectKBits(val uint64, k uint64) uint64 {
+	return val & ((1 << k) - 1)
 }
-
