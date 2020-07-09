@@ -1,42 +1,31 @@
 package smalllist
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFixedSizeListGet(t *testing.T) {
-	xs := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+func TestFixedSized_GetSet(t *testing.T) {
 
-	// length8
-	smallList8 := From(xs, length8)
-	for i := 0; i < len(xs); i++ {
-		assert.Equal(t, i, smallList8.Get(i))
-	}
+	for nBit := 2; nBit < 16; nBit++ {
+		max := int(math.Pow(2, float64(nBit)))
+		f := &FixedSized{size:uint64(nBit), smalllist:make([]uint64, 100000)}
 
-	// length16
-	smallList16 := From(xs, length16)
-	for i := 0; i < len(xs); i++ {
-		assert.Equal(t, i, smallList16.Get(i))
-	}
-
-	// length32
-	smallList32 := From(xs, length32)
-	for i := 0; i < len(xs); i++ {
-		assert.Equal(t, i, smallList32.Get(i))
+		for i := 0; i < max * 4; i++ {
+			f.Set(uint64(i), i)
+		}
+		for i := 0; i < max; i++ {
+			assert.Equal(t, uint64(i), f.Get(i))
+		}
 	}
 }
 
-func TestFixedSizedList_Set(t *testing.T) {
-	xs := []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	ys := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-
-	smallList16 := From(xs, length16)
-	for i := 0; i < len(ys); i++ {
-		smallList16.Set(i, ys[i])
-	}
-	for i := 0; i < len(ys); i++ {
-		assert.Equal(t, ys[i], smallList16.Get(i))
+func TestSelectKBits(t *testing.T) {
+	for i := 0; i < 9; i++ {
+		expected := uint64(math.Pow(2, float64(i))) - 1
+		n := selectKBits(1023, uint64(i))
+		assert.Equal(t, expected, n)
 	}
 }
