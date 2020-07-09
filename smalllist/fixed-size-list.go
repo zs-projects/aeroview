@@ -24,11 +24,11 @@ func (f *FixedSized) Get(idx int) uint64 {
 		// select of msb of size  (blockSize - offset)
 		msb := (f.smalllist[block] >> offset) <<  overflow
 		// select of lsb of size of overflow in next block
-		lsb := selectKBits(f.smalllist[block + 1], overflow)
+		lsb := selectLastKBits(f.smalllist[block + 1], overflow)
 		x |= msb
 		x |= lsb
 	} else {
-		x = selectKBits(f.smalllist[block] >> offset, f.size)
+		x = selectLastKBits(f.smalllist[block] >> offset, f.size)
 	}
 	return x
 }
@@ -44,7 +44,7 @@ func (f *FixedSized) Set(val uint64, idx int) {
 		// most significant bits only, remove overflow bits
 		msb := val >> (overflow)
 		// least significant bits only
-		lsb := selectKBits(val, overflow)
+		lsb := selectLastKBits(val, overflow)
 		f.smalllist[block] |= msb << offset
 		f.smalllist[block + 1] |= lsb
 	} else {
@@ -58,6 +58,11 @@ func (f *FixedSized) blockAndOffset(idx int) (uint64, uint64) {
 	return block, offset
 }
 
-func selectKBits(val uint64, k uint64) uint64 {
+func selectLastKBits(val uint64, k uint64) uint64 {
 	return val & ((1 << k) - 1)
+}
+
+func selectFirstKBits(val uint64, k uint64) uint64 {
+	mask := (1 << k) - 1
+	return val & (uint64(mask) << (uint64(64) - k))
 }

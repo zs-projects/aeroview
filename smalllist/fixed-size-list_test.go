@@ -22,10 +22,23 @@ func TestFixedSized_GetSet(t *testing.T) {
 	}
 }
 
-func TestSelectKBits(t *testing.T) {
+func TestSelectFistKBits(t *testing.T) {
 	for i := 0; i < 9; i++ {
 		expected := uint64(math.Pow(2, float64(i))) - 1
-		n := selectKBits(1023, uint64(i))
+		n := selectLastKBits(1023, uint64(i))
+		assert.Equal(t, expected, n)
+	}
+}
+
+func TestSelectLastKBits(t *testing.T) {
+	for i := 0; i <= 63; i ++ {
+		var expected uint64
+		exp := 63
+		for j := 0; j < i; j++ {
+			expected += uint64(math.Pow(2, float64(exp)))
+			exp -= 1
+		}
+		n := selectFirstKBits((1<<64)-1, uint64(i))
 		assert.Equal(t, expected, n)
 	}
 }
