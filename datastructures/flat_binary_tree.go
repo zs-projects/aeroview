@@ -2,6 +2,10 @@ package datastructures
 
 import "math"
 
+const (
+	rootNodeOffset = 1
+)
+
 // FBTree stands from Flat Binary Tree.
 // It is called flat becauses it does not used a pointer base data representation.
 // We use a BitQueue to represent the structure of the tree.
@@ -20,25 +24,35 @@ type FBNode struct {
 
 // Root Returns the root value of the tree.
 func (f FBTree) Root() *FBNode {
-	return f.nodeView(0)
+	return f.node(0)
 }
 
 // LeftChild returns the left child of the node.
 func (f FBTree) LeftChild(node FBNode) *FBNode {
-	position := 2*node.offset + 1
-	if f.structure.Get(position) == 1 {
-		return f.nodeView(position)
+	if f.nodeHasLeftChild(node) {
+		nodePos := 2*node.offset + rootNodeOffset
+		return f.node(nodePos)
 	}
 	return nil
 }
 
 // RightChild returns the right child of the node.
 func (f FBTree) RightChild(node FBNode) *FBNode {
-	position := 2*node.offset + 2
-	if f.structure.Get(position) == 1 {
-		return f.nodeView(position)
+	if f.nodeHasRightChild(node) {
+		nodePos := 2*node.offset + 1 + rootNodeOffset
+		return f.node(nodePos)
 	}
 	return nil
+}
+
+func (f FBTree) nodeHasRightChild(node FBNode) bool {
+	nodePos := 2*node.offset + 1
+	return f.structure.Get(nodePos) == 1
+}
+
+func (f FBTree) nodeHasLeftChild(node FBNode) bool {
+	nodePos := 2 * node.offset
+	return f.structure.Get(nodePos) == 1
 }
 
 // IsLeaf returns tree if the node is a leaf node.
@@ -46,7 +60,7 @@ func (f FBTree) IsLeaf(node FBNode) bool {
 	return f.structure.Get(2*node.offset) == 0 && f.structure.Get(2*node.offset+1) == 0
 }
 
-func (f FBTree) nodeView(offset int) *FBNode {
+func (f FBTree) node(offset int) *FBNode {
 	return &FBNode{
 		offset: offset,
 		Value:  f.nodes[offset],

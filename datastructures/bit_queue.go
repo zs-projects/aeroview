@@ -95,7 +95,7 @@ func (m BitQueue) Get(i int) uint8 {
 	return m.bits[position] >> (7 - offset) & 0b1
 }
 
-// Set set the bit balue at position i
+// Toggle set the bit balue at position i
 // does nothing if i is out of bound
 func (m BitQueue) Toggle(i int) {
 	position := i / 8
@@ -105,7 +105,7 @@ func (m BitQueue) Toggle(i int) {
 	}
 }
 
-// Set set the bit balue at position i
+// High set the bit balue at position i
 // does nothing if i is out of bound
 func (m BitQueue) High(i int) {
 	position := i / 8

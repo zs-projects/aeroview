@@ -18,5 +18,4 @@ func TestEliasFanoVector(t *testing.T) {
 			t.Errorf("Get(%v) method for Elias Fano encoding failed got %v \t expected %v \n", i, out, v)
 		}
 	}
-
 }

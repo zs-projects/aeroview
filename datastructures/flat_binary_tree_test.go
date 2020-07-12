@@ -68,7 +68,7 @@ func TestMakeFBTreeFromLeafs(t *testing.T) {
 	}
 	lr := fbt.RightChild(*l)
 	if lr != nil {
-		t.Errorf("Right Child of Left Child of Root should be nil, got %v", lr)
+		t.Errorf("Right Child of Left Child of Root should be nil, got %v", lr.Value)
 	}
 	rg := fbt.RightChild(*r)
 	if rg.Value != 8 {
