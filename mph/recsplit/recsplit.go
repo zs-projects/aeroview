@@ -1,46 +1,67 @@
 package recsplit
 
 import (
+	"fmt"
+	"math"
 	"sync"
 	"sync/atomic"
 
 	"zs-project.org/aeroview/datastructures"
-	"zs-project.org/aeroview/mph/farmhash"
+	"zs-project.org/aeroview/mph/murmurhash"
 	"zs-project.org/aeroview/mph/utils"
 )
 
 const (
 	rNot       = 0
-	maxRetries = 2 << 8
+	maxRetries = 2 << 32
 )
 
 // Recsplit represents a minimal perfect hash function found using the recsplit algorithm.
 type Recsplit struct {
 	values [][]byte
 	// One binary tree per bucket.
-	keys []datastructures.FBTree
+	keys    []datastructures.FBTree
+	cumSums []int
 }
 
 // GetKey Returns the looked for value
 func (r Recsplit) GetKey(s string) int {
 	// 1. Determine bucket.
-	// bucket := hash(s, 0) % len(r.keys)
-	// tree := r.keys[bucket]
-	// node := tree.Root()
-	return 0
+	bucket := hash(s, 0) % len(r.keys)
+	tree := r.keys[bucket]
+	node := tree.Root()
+	h := r.cumSums[bucket]
+	for {
+		if tree.IsLeaf(*node) {
+			return h + hash(s, uint64(node.Value.R))%node.Value.NbKeys
+		}
+		split := hash(s, uint64(node.Value.R)) % node.Value.NbKeys
+		if split < node.Value.NbKeys/2 {
+			node = tree.LeftChild(*node)
+		} else {
+			h = h + int(node.Value.NbKeys)/2
+			node = tree.RightChild(*node)
+		}
+
+	}
+}
+
+// Get Returns the looked for value
+func (r Recsplit) Get(s string) []byte {
+	return r.values[r.GetKey(s)]
 }
 
 // FromMap computes a minimal perfect hashing function over the map that is provided as an argument.
 // nbWorkes controls the number of parallel go-routines to be launched to do the work.
 func FromMap(data map[string][]byte, nbWorkers int) Recsplit {
-	nBuckets := len(data) / 100
+	nBuckets := int(math.Max(float64(len(data))/100, 1))
 
 	partitioner := func(data string) int {
-		return hash(data, rNot)
+		return hash(data, rNot) % nBuckets
 	}
 	// 1. Assign data to buckets.
 	buckets := utils.AssignToBuckets(partitioner, data, nBuckets)
-	splits, results := makeWorkerPool(5, len(buckets))
+	splits, results := makeWorkerPool(nbWorkers, nBuckets)
 	overflows := make(map[int]struct{})
 	for i, b := range buckets {
 		// 2. Check for overflows.
@@ -51,7 +72,8 @@ func FromMap(data map[string][]byte, nbWorkers int) Recsplit {
 			// 4. send the bucket to the workers. ( it will be split or brute forced.)
 			rb := recsplitBucket{
 				keys:    b.Keys,
-				parents: []uint32{uint32(b.OriginalIndex)},
+				parents: []uint32{},
+				sizes:   []uint32{},
 				bucket:  b.OriginalIndex,
 			}
 			splits <- rb
@@ -74,8 +96,11 @@ func FromMap(data map[string][]byte, nbWorkers int) Recsplit {
 func makeWorkerPool(nbWokers int, initialWorkCount int) (chan<- recsplitBucket, <-chan recsplitLeaf) {
 	var wg sync.WaitGroup
 	work := int64(initialWorkCount)
-	splits := make(chan recsplitBucket)
-	results := make(chan recsplitLeaf)
+	// Buffering in the channels here is important to avoid deadlocks
+	// Given the pattern of concurrency we chose.
+	// IT'S UGLY....
+	splits := make(chan recsplitBucket, 5*nbWokers+1)
+	results := make(chan recsplitLeaf, 5*nbWokers+1)
 	for i := 0; i < nbWokers; i++ {
 		wg.Add(1)
 		go recsplitWorker(&wg, &work, splits, results)
@@ -102,14 +127,14 @@ func recsplitWorker(wg *sync.WaitGroup, workCount *int64, splits chan recsplitBu
 		if len(b.keys) <= 5 {
 			r := b.bruteForceMPH()
 			b.parents = append(b.parents, uint32(r))
+			b.sizes = append(b.sizes, uint32(len(b.keys)))
 			atomic.AddInt64(workCount, -1)
 			results <- recsplitLeaf{b}
 		} else {
 			left, right := b.split()
+			atomic.AddInt64(workCount, +2)
 			splits <- right
-			atomic.AddInt64(workCount, +1)
 			splits <- left
-			atomic.AddInt64(workCount, +1)
 			atomic.AddInt64(workCount, -1)
 		}
 	}
@@ -118,15 +143,22 @@ func recsplitWorker(wg *sync.WaitGroup, workCount *int64, splits chan recsplitBu
 
 func mphFromRecsplitLeafs(res map[int][]recsplitLeaf, nbBuckets int, values map[string][]byte) Recsplit {
 	mph := Recsplit{
-		keys:   make([]datastructures.FBTree, nbBuckets),
-		values: make([][]byte, len(values)),
+		keys:    make([]datastructures.FBTree, nbBuckets),
+		values:  make([][]byte, len(values)),
+		cumSums: make([]int, 1, nbBuckets),
 	}
+	cumSum := 0
 	for bucket, leafs := range res {
-		leafs := make([]datastructures.TreeLeaf, 0, len(leafs))
+		tleafs := make([]datastructures.TreeLeaf, 0, len(leafs))
 		for _, leaf := range leafs {
-			leafs = append(leafs, leaf)
+			tleafs = append(tleafs, leaf)
 		}
-		mph.keys[bucket] = datastructures.MakeFBTreeFromLeafs(leafs)
+		mph.keys[bucket] = datastructures.MakeFBTreeFromLeafs(tleafs)
+		cumSum += mph.keys[bucket].Root().Value.NbKeys
+		mph.cumSums = append(mph.cumSums, cumSum)
+	}
+	for key, value := range values {
+		mph.values[mph.GetKey(key)] = value
 	}
 	return mph
 }
@@ -134,22 +166,23 @@ func mphFromRecsplitLeafs(res map[int][]recsplitLeaf, nbBuckets int, values map[
 type recsplitBucket struct {
 	keys    []string
 	parents []uint32
-	isLeft  []bool
+	sizes   []uint32
+	isRight []bool
 	bucket  int
 }
 type recsplitLeaf struct {
 	recsplitBucket
 }
 
-func (r recsplitLeaf) Values() []int {
-	vals := make([]int, 0, len(r.parents))
-	for _, v := range r.parents {
-		vals = append(vals, int(v))
+func (r recsplitLeaf) Values() []datastructures.FBValue {
+	vals := make([]datastructures.FBValue, 0, len(r.parents))
+	for i, v := range r.parents {
+		vals = append(vals, datastructures.FBValue{NbKeys: int(r.sizes[i]), R: int(v)})
 	}
 	return vals
 }
 func (r recsplitLeaf) Path() []bool {
-	return r.isLeft
+	return r.isRight
 }
 
 type recsplitLeafs []recsplitLeaf
@@ -159,28 +192,34 @@ func (b recsplitBucket) split() (recsplitBucket, recsplitBucket) {
 	left := recsplitBucket{
 		keys:    lKeys,
 		parents: make([]uint32, len(b.parents)),
-		isLeft:  make([]bool, len(b.isLeft)),
+		sizes:   make([]uint32, len(b.sizes)),
+		isRight: make([]bool, len(b.isRight)),
 		bucket:  b.bucket,
 	}
 	right := recsplitBucket{
 		keys:    rKeys,
 		parents: make([]uint32, len(b.parents)),
-		isLeft:  make([]bool, len(b.isLeft)),
+		sizes:   make([]uint32, len(b.sizes)),
+		isRight: make([]bool, len(b.isRight)),
 		bucket:  b.bucket,
 	}
 	copy(right.parents, b.parents)
-	copy(right.isLeft, b.isLeft)
+	copy(right.sizes, b.sizes)
+	copy(right.isRight, b.isRight)
 	copy(left.parents, b.parents)
-	copy(left.isLeft, b.isLeft)
+	copy(left.sizes, b.sizes)
+	copy(left.isRight, b.isRight)
 	right.parents = append(right.parents, uint32(r))
 	left.parents = append(left.parents, uint32(r))
-	right.isLeft = append(right.isLeft, false)
-	left.isLeft = append(left.isLeft, true)
+	right.sizes = append(right.sizes, uint32(len(b.keys)))
+	left.sizes = append(left.sizes, uint32(len(b.keys)))
+	right.isRight = append(right.isRight, true)
+	left.isRight = append(left.isRight, false)
 	return left, right
 }
 
 func (b recsplitBucket) partitionKeys() (int, []string, []string) {
-	r := uint32(1)
+	r := uint64(1)
 	s := len(b.keys) / 2
 	lKeys := make([]string, s+1)
 	rKeys := make([]string, s+1)
@@ -195,19 +234,22 @@ func (b recsplitBucket) partitionKeys() (int, []string, []string) {
 				rKeys[rPos] = key
 				rPos++
 			}
+			if rPos >= s+1 || lPos >= s+1 {
+				break
+			}
 		}
 		if lPos == s {
 			return int(r), lKeys[:lPos], rKeys[:rPos]
 		}
 		r++
 		if r >= maxRetries {
-			panic("Can't partition keys.")
+			panic(fmt.Sprintf("Can't partition keys. %v", b.keys))
 		}
 	}
 }
 
 func (b recsplitBucket) bruteForceMPH() int {
-	r := uint32(1)
+	r := uint64(1)
 	collisions := make([]bool, len(b.keys))
 	for {
 		for i := range collisions {
@@ -217,11 +259,19 @@ func (b recsplitBucket) bruteForceMPH() int {
 			return int(r)
 		}
 		r++
+		if r >= maxRetries {
+			panic(fmt.Sprintf("Can't brute force %v", b.keys))
+		}
 	}
 }
-func checkForCollisions(r uint32, keys []string, collisions []bool) bool {
+
+func checkForCollisions(r uint64, keys []string, collisions []bool) bool {
+	if len(collisions) < len(keys) {
+		panic("in recplist.checkForCollision collisions buffer is too small.")
+	}
+
 	for _, key := range keys {
-		h := hash(key, uint32(r)) % len(keys)
+		h := hash(key, uint64(r)) % len(keys)
 		if !collisions[h] {
 			collisions[h] = true
 		} else {
@@ -232,6 +282,10 @@ func checkForCollisions(r uint32, keys []string, collisions []bool) bool {
 	return false
 }
 
-func hash(data string, r uint32) int {
-	return int(farmhash.Hash32(data) ^ r)
+func hash(data string, r uint64) int {
+	v := murmurhash.Hash64(data) ^ r
+	if int(v) < 0 {
+		return -int(v)
+	}
+	return int(v)
 }

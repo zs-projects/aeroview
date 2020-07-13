@@ -1,10 +1,25 @@
 package datastructures
 
-import "math"
+import (
+	"bytes"
+	"fmt"
+	"math"
+)
 
 const (
 	rootNodeOffset = 1
 )
+
+type FBValue struct {
+	NbKeys int
+	R      int
+}
+
+// FBNode reprensents a node in the flat binary tree.
+type FBNode struct {
+	offset int
+	Value  FBValue
+}
 
 // FBTree stands from Flat Binary Tree.
 // It is called flat becauses it does not used a pointer base data representation.
@@ -12,14 +27,18 @@ const (
 // And in the future Rank and Select to have constant time access to parent/ left child and right child.
 // TODO: Add Rank and Select.
 type FBTree struct {
-	nodes     []int
+	nodes     []FBValue
 	structure BitQueue
 }
 
-// FBNode reprensents a node in the flat binary tree.
-type FBNode struct {
-	offset int
-	Value  int
+func (f FBTree) String() string {
+	w := bytes.NewBuffer(nil)
+	for r := range f.structure.Data() {
+		fmt.Fprintf(w, "%b", r)
+	}
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "%v", f.nodes)
+	return w.String()
 }
 
 // Root Returns the root value of the tree.
@@ -73,7 +92,7 @@ func (f FBTree) node(offset int) *FBNode {
 // Invariant : Len(TreeLeaf.Values) == Len(TreeLeaf.Path) + 1
 type TreeLeaf interface {
 	// Values return the values in the tree from the root to the leaf.
-	Values() []int
+	Values() []FBValue
 	// The path to the root of the tree, with false for left and true for right.
 	Path() []bool
 }
@@ -124,7 +143,7 @@ func MakeFBTreeFromLeafs(tls []TreeLeaf) FBTree {
 
 func preallocateFBTree(depth int) FBTree {
 	tr := FBTree{
-		nodes:     make([]int, 0),
+		nodes:     make([]FBValue, 0),
 		structure: BitQueue{},
 	}
 	tr.ensureCapacity(depth)
@@ -137,7 +156,7 @@ func preallocateFBTree(depth int) FBTree {
 func (f *FBTree) ensureCapacity(depth int) {
 	nbNodes := int(math.Pow(2, float64(depth+1))) - 1
 	if nbNodes > len(f.nodes) {
-		nNodes := make([]int, nbNodes)
+		nNodes := make([]FBValue, nbNodes)
 		copy(nNodes, f.nodes)
 		f.nodes = nNodes
 	}
