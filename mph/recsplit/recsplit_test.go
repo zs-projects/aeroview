@@ -8,25 +8,27 @@ import (
 )
 
 func TestFromMap(t *testing.T) {
-	mp := make(map[string][]byte, 11)
-	for i := 0; i < 11; i++ {
+	nbKeys := 50000
+	mp := make(map[string][]byte, nbKeys)
+	for i := 0; i < nbKeys; i++ {
 		data := fmt.Sprintf("test-%v", i)
 		mp[data] = []byte(data)
 	}
-	mph := FromMap(mp, 5)
+	mph := FromMap(mp, 20)
 	collisions := make([]bool, len(mp))
 	for key, value := range mp {
 		i := mph.GetKey(key)
 		if i >= len(collisions) {
 			t.Errorf("Index out of range, did not learn an mph %v", i)
-		}
-		if i < len(collisions) && collisions[i] {
-			t.Errorf("Found collision for value %v that hashed at %v", key, i)
 		} else {
-			collisions[i] = true
+			if i < len(collisions) && collisions[i] {
+				t.Errorf("Found collision for value %v that hashed at %v", key, i)
+			} else {
+				collisions[i] = true
+			}
 		}
 		if !bytes.Equal(mph.Get(key), value) {
-			t.Errorf("Values assignement is corrupt, expecting %v, got %v", value, mph.Get(key))
+			t.Errorf("Values assignement is corrupt, expecting %v, got %v", string(value), string(mph.Get(key)))
 		}
 	}
 }
@@ -34,14 +36,16 @@ func TestFromMap(t *testing.T) {
 func TestMPHFromRecsplitLeafs(t *testing.T) {
 	var wg sync.WaitGroup
 	workCount := int64(1)
-	splits := make(chan recsplitBucket, 300)
-	results := make(chan recsplitLeaf, 300)
+	nbKeys := 5000
+	splits := make(chan recsplitBucket, nbKeys)
+	results := make(chan recsplitLeaf, nbKeys)
 	keys := make([]string, 0)
-	for i := 0; i < 10; i++ {
+	mp := make(map[string][]byte, nbKeys)
+	for i := 0; i < nbKeys; i++ {
 		data := fmt.Sprintf("test-%v", i)
+		mp[data] = []byte(data)
 		keys = append(keys, data)
 	}
-	//keys := []string{"toto", "tata", "titi", "test", "tardif", "toff", "tiff", "tall", "health", "append", "count"}
 	b := recsplitBucket{
 		keys:    keys,
 		parents: []uint32{},
@@ -59,9 +63,9 @@ func TestMPHFromRecsplitLeafs(t *testing.T) {
 		}
 		res[r.bucket] = append(res[r.bucket], r)
 	}
-	mph := mphFromRecsplitLeafs(res, 1, nil)
+	mph := mphFromRecsplitLeafs(res, 1, mp)
 	collisions := make([]bool, len(keys))
-	for _, key := range keys {
+	for key, value := range mp {
 		i := mph.GetKey(key)
 		if i >= len(collisions) {
 			t.Errorf("Index out of range, did not learn an mph %v", i)
@@ -70,6 +74,9 @@ func TestMPHFromRecsplitLeafs(t *testing.T) {
 			t.Errorf("Found collision for value %v that hashed at %v", key, i)
 		} else {
 			collisions[i] = true
+		}
+		if !bytes.Equal(mph.Get(key), value) {
+			t.Errorf("Values assignement is corrupt, expecting %v, got %v", string(value), string(mph.Get(key)))
 		}
 	}
 }

@@ -6,14 +6,14 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/twmb/murmur3"
 	"zs-project.org/aeroview/datastructures"
-	"zs-project.org/aeroview/mph/murmurhash"
 	"zs-project.org/aeroview/mph/utils"
 )
 
 const (
 	rNot       = 0
-	maxRetries = 2 << 32
+	maxRetries = 2 << 16
 )
 
 // Recsplit represents a minimal perfect hash function found using the recsplit algorithm.
@@ -27,7 +27,7 @@ type Recsplit struct {
 // GetKey Returns the looked for value
 func (r Recsplit) GetKey(s string) int {
 	// 1. Determine bucket.
-	bucket := hash(s, 0) % len(r.keys)
+	bucket := hash(s, rNot) % len(r.keys)
 	tree := r.keys[bucket]
 	node := tree.Root()
 	h := r.cumSums[bucket]
@@ -80,7 +80,7 @@ func FromMap(data map[string][]byte, nbWorkers int) Recsplit {
 		}
 	}
 	// 5. Collect the finalRecSplitbuckets.
-	fBuckets := make(map[int][]recsplitLeaf, 0)
+	fBuckets := make(map[int][]recsplitLeaf, nBuckets)
 	// NOTE: for now this channel is closed nowhere. This will loop forever.
 	for res := range results {
 		if _, ok := fBuckets[res.bucket]; !ok {
@@ -99,8 +99,8 @@ func makeWorkerPool(nbWokers int, initialWorkCount int) (chan<- recsplitBucket, 
 	// Buffering in the channels here is important to avoid deadlocks
 	// Given the pattern of concurrency we chose.
 	// IT'S UGLY....
-	splits := make(chan recsplitBucket, 5*nbWokers+1)
-	results := make(chan recsplitLeaf, 5*nbWokers+1)
+	splits := make(chan recsplitBucket, 100000*nbWokers+1)
+	results := make(chan recsplitLeaf, 100000*nbWokers+1)
 	for i := 0; i < nbWokers; i++ {
 		wg.Add(1)
 		go recsplitWorker(&wg, &work, splits, results)
@@ -128,14 +128,13 @@ func recsplitWorker(wg *sync.WaitGroup, workCount *int64, splits chan recsplitBu
 			r := b.bruteForceMPH()
 			b.parents = append(b.parents, uint32(r))
 			b.sizes = append(b.sizes, uint32(len(b.keys)))
-			atomic.AddInt64(workCount, -1)
 			results <- recsplitLeaf{b}
+			atomic.AddInt64(workCount, -1)
 		} else {
 			left, right := b.split()
-			atomic.AddInt64(workCount, +2)
+			atomic.AddInt64(workCount, +1)
 			splits <- right
 			splits <- left
-			atomic.AddInt64(workCount, -1)
 		}
 	}
 	wg.Done()
@@ -154,7 +153,9 @@ func mphFromRecsplitLeafs(res map[int][]recsplitLeaf, nbBuckets int, values map[
 			tleafs = append(tleafs, leaf)
 		}
 		mph.keys[bucket] = datastructures.MakeFBTreeFromLeafs(tleafs)
-		cumSum += mph.keys[bucket].Root().Value.NbKeys
+	}
+	for _, value := range mph.keys {
+		cumSum += value.Root().Value.NbKeys
 		mph.cumSums = append(mph.cumSums, cumSum)
 	}
 	for key, value := range values {
@@ -283,9 +284,9 @@ func checkForCollisions(r uint64, keys []string, collisions []bool) bool {
 }
 
 func hash(data string, r uint64) int {
-	v := murmurhash.Hash64(data) ^ r
-	if int(v) < 0 {
-		return -int(v)
+	hash := murmur3.SeedStringSum64(r, data)
+	if int(hash) <= 0 {
+		return -int(hash)
 	}
-	return int(v)
+	return int(hash)
 }
