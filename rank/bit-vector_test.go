@@ -1,7 +1,7 @@
 package rank
 
 import (
-	"fmt"
+	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
 )
@@ -16,32 +16,30 @@ func TestBitVec_Get(t *testing.T) {
 		b.Set(int(n), 1)
 	}
 	for x := range indexes {
-		if b.Get(int(x)) != 1 {
-
-			fmt.Println("ooooo")
-		}
-	}
-}
-
-func TestBitVec_GetRange(t *testing.T) {
-	b := NewBitVec(1)
-	b.Set(2, 1)
-	b.Set(4, 1)
-	b.Set(66, 1)
-	n := b.GetRange(50, 65)
-	fmt.Println(count(int(n)))
-	if count(int(n)) != 1 {
-		fmt.Println("ooo")
+		assert.Equal(t, 1, b.Get(int(x)))
 	}
 }
 
 func TestBitVec_Get8BitRange(t *testing.T) {
+	lookup := Make8BitLookup()
+
 	b := NewBitVec(1)
 	b.Set(59, 1)
 	b.Set(64, 1)
 	b.Set(65, 1)
 
+	/*
+		from bit set representation
+		indexes:	 65, 64, 63, 62, 61, 60, 59, ...
+		values:  	 1,  1,   0,  0,  0,  0,  1,
+	    block id     1,  1,   0,   0,  0,  0,  0,
+
+		binary   1100001
+		decimal  97
+		number of ones: 3
+	*/
+
 	n := b.Get8BitRange(59, 66)
-	lookup := Make8BitLookup()
-	fmt.Println(lookup[n])
+	assert.Equal(t, 97, n)
+	assert.Equal(t, uint8(3), lookup[n])
 }
