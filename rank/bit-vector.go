@@ -29,26 +29,32 @@ func (b *BitVec) Get(idx int) int {
 	return int((*b)[index] >> offset) & 1
 }
 
-//func (b *BitVec) GetRange(low, high int) uint64 {
-//	if high - low >= blockSize {
-//		panic("cannot do more than 64 bit range")
-//	}
-//
-//	lowIndex := low / blockSize
-//	hiIndex := high / blockSize
-//	lowOffset := low % blockSize
-//	hiOffset := high % blockSize
-//
-//	if lowIndex == hiIndex {
-//		return (*b)[lowIndex] >> lowOffset
-//	}
-//
-//	lsbMask := (1 << hiOffset) - 1
-//	lsb := (*b)[hiIndex] & (uint64(lsbMask) << (blockSize - hiOffset))
-//
-//	msb := (*b)[lowIndex] & ((1 << (blockSize - lowOffset)) - 1)
-//	return uint64(msb << hiOffset) | lsb
-//}
+func (b *BitVec) Get8BitRange(low, high int) uint8 {
+	if high - low >= 8 {
+		panic("cannot do more than 64 bit range")
+	}
+	if low == high {
+		return uint8(b.Get(low))
+	}
 
+	lowIndex := low / blockSize
+	hiIndex := high / blockSize
+	lowOffset := low % blockSize
+	hiOffset := high % blockSize
 
+	if lowIndex == hiIndex {
+		selectionMask := uint64((1 << (hiOffset - lowOffset + 1)) - 1)
+		return uint8(((*b)[lowIndex] >> lowOffset) & selectionMask)
+	}
 
+	// lsb
+	lsbHi := blockSize - lowOffset - 1
+	lsb := b.Get8BitRange(low, low + lsbHi)
+
+	// msb
+	msbLow := high - hiOffset
+	msb := b.Get8BitRange(msbLow, high)
+
+	// shift msb by the size of lsb
+	return lsb | (msb << (blockSize - lowOffset))
+}
