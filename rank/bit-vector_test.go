@@ -23,10 +23,22 @@ func TestBitVec_Get(t *testing.T) {
 func TestBitVec_Get8BitRange(t *testing.T) {
 	lookup := Make8BitLookup()
 
-	b := NewBitVec(1)
-	b.Set(59, 1)
-	b.Set(64, 1)
-	b.Set(65, 1)
+	// 1. from same block
+
+	b1 := NewBitVec(1)
+	b1.Set(7, 1)
+	b1.Set(2, 1)
+	n := b1.Get8BitRange(0, 7)
+	assert.Equal(t, uint8(132), n)
+	assert.Equal(t, uint8(2), lookup[n])
+
+
+	// 2. from diff blocks
+
+	b2 := NewBitVec(1)
+	b2.Set(59, 1)
+	b2.Set(64, 1)
+	b2.Set(65, 1)
 
 	/*
 		from bit set representation
@@ -39,7 +51,7 @@ func TestBitVec_Get8BitRange(t *testing.T) {
 		number of ones: 3
 	*/
 
-	n := b.Get8BitRange(59, 66)
-	assert.Equal(t, 97, n)
+	n = b2.Get8BitRange(59, 66)
+	assert.Equal(t, uint8(97), n)
 	assert.Equal(t, uint8(3), lookup[n])
 }
