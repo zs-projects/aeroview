@@ -62,7 +62,7 @@ func (r RankPopCount) blocksIdxForSuperBlock(i int) []int {
 	}
 	return ret
 }
-func (r RankPopCount) Get(idx int) uint64 {
+func (r RankPopCount) Rank(idx int) uint64 {
 	spblocIdx := idx / r.rankMetadata.SuperBlockSize
 	blockIdx := idx / BLOCKSIZE
 	shift := BLOCKSIZE - idx%BLOCKSIZE

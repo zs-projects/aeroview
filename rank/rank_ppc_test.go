@@ -24,7 +24,7 @@ func TestRankPpc(t *testing.T) {
 	fmt.Println(rpc.Overhead())
 	for i := 0; i < size*64; i++ {
 		expected := countBits(i, rpc.data)
-		actual := rpc.Get(i)
+		actual := rpc.Rank(i)
 		if actual != expected {
 			fmt.Println("Coucou")
 		}
