@@ -1,9 +1,10 @@
 package rank
 
 import (
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBitVec_Get(t *testing.T) {
@@ -32,7 +33,6 @@ func TestBitVec_Get8BitRange(t *testing.T) {
 	assert.Equal(t, uint8(132), n)
 	assert.Equal(t, uint8(2), lookup[n])
 
-
 	// 2. from diff blocks
 
 	b2 := NewBitVec(1)
@@ -41,14 +41,14 @@ func TestBitVec_Get8BitRange(t *testing.T) {
 	b2.Set(65, 1)
 
 	/*
-		from bit set representation
-		indexes:	 65, 64, 63, 62, 61, 60, 59, ...
-		values:  	 1,  1,   0,  0,  0,  0,  1,
-	    block id     1,  1,   0,   0,  0,  0,  0,
+			from bit set representation
+			indexes:	 65, 64, 63, 62, 61, 60, 59, ...
+			values:  	 1,  1,   0,  0,  0,  0,  1,
+		    block id     1,  1,   0,   0,  0,  0,  0,
 
-		binary   1100001
-		decimal  97
-		number of ones: 3
+			binary   1100001
+			decimal  97
+			number of ones: 3
 	*/
 
 	n = b2.Get8BitRange(59, 66)

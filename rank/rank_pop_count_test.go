@@ -18,7 +18,7 @@ func TestRankPpc(t *testing.T) {
 		}
 	}
 	rpc := MakeRankPopCount(xs)
-	if len(rpc.blocks)*8 < len(xs) {
+	if len(rpc.Blocks)*8 < len(xs) {
 		t.Errorf("%# v", pretty.Formatter(rpc))
 	}
 	fmt.Println(rpc.Overhead())
@@ -32,7 +32,7 @@ func TestRankPpc(t *testing.T) {
 	}
 }
 
-func countBits(idx int, data []uint64) uint64 {
+func countBits(idx int, data []uint64) int {
 	acc := 0
 	j := idx / BLOCKSIZE
 	shift := BLOCKSIZE - idx%BLOCKSIZE
@@ -40,5 +40,5 @@ func countBits(idx int, data []uint64) uint64 {
 		acc += bits.OnesCount64(data[k])
 	}
 	acc += bits.OnesCount64(data[j] >> shift)
-	return uint64(acc)
+	return int(acc)
 }

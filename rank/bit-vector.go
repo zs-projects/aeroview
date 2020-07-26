@@ -15,9 +15,9 @@ func (b *BitVec) Set(idx int, val uint8) {
 	index := idx / blockSize
 	offset := idx % blockSize
 	if index >= len(*b) {
-		*b = append(*b, make([]uint64, index - len(*b) + 1)...)
+		*b = append(*b, make([]uint64, index-len(*b)+1)...)
 	}
-	(*b)[index] |= uint64(val & 1) << offset
+	(*b)[index] |= uint64(val&1) << offset
 }
 
 func (b *BitVec) Get(idx int) int {
@@ -26,11 +26,11 @@ func (b *BitVec) Get(idx int) int {
 	if index >= len(*b) {
 		return 0
 	}
-	return int((*b)[index] >> offset) & 1
+	return int((*b)[index]>>offset) & 1
 }
 
 func (b *BitVec) Get8BitRange(low, high int) uint8 {
-	if high - low >= 8 {
+	if high-low >= 8 {
 		panic("cannot do more than 64 bit range")
 	}
 	if low == high {
@@ -49,7 +49,7 @@ func (b *BitVec) Get8BitRange(low, high int) uint8 {
 
 	// lsb
 	lsbHi := blockSize - lowOffset - 1
-	lsb := b.Get8BitRange(low, low + lsbHi)
+	lsb := b.Get8BitRange(low, low+lsbHi)
 
 	// msb
 	msbLow := high - hiOffset

@@ -42,19 +42,19 @@ func (r rankMetadata) Overhead() float64 {
 
 type RankPopCount struct {
 	rankMetadata
-	superBlockRanks []uint64
-	blocks          []uint8
+	SuperBlockRanks []uint64
+	Blocks          []uint8
 	data            BitVec
 }
 
-func (r RankPopCount) blocksIdxForSuperBlock(i int) []int {
+func (r RankPopCount) BlocksIdxForSuperBlock(i int) []int {
 	if i < 0 {
 		return nil
 	}
 	lower := i * r.rankMetadata.BlocksPerSuperBlock
 	upper := lower + r.rankMetadata.BlocksPerSuperBlock
-	if upper > len(r.blocks) {
-		upper = len(r.blocks)
+	if upper > len(r.Blocks) {
+		upper = len(r.Blocks)
 	}
 	ret := make([]int, upper-lower)
 	for i := range ret {
@@ -62,15 +62,15 @@ func (r RankPopCount) blocksIdxForSuperBlock(i int) []int {
 	}
 	return ret
 }
-func (r RankPopCount) Rank(idx int) uint64 {
+func (r RankPopCount) Rank(idx int) int {
 	spblocIdx := idx / r.rankMetadata.SuperBlockSize
 	blockIdx := idx / BLOCKSIZE
 	shift := BLOCKSIZE - idx%BLOCKSIZE
-	rankSuperBlock := r.superBlockRanks[spblocIdx]
-	blockRank := uint64(r.blocks[blockIdx])
+	rankSuperBlock := r.SuperBlockRanks[spblocIdx]
+	blockRank := uint64(r.Blocks[blockIdx])
 	dataIdx := idx / BLOCKSIZE
 	pop := uint64(bits.OnesCount64(r.data[dataIdx] >> shift))
-	return rankSuperBlock + blockRank + pop
+	return int(rankSuperBlock + blockRank + pop)
 }
 
 func MakeRankPopCount(b BitVec) RankPopCount {
@@ -79,17 +79,17 @@ func MakeRankPopCount(b BitVec) RankPopCount {
 
 	rk := RankPopCount{
 		rankMetadata:    rm,
-		superBlockRanks: make([]uint64, rm.NbSuperBlocks),
-		blocks:          make([]uint8, rm.NbBlocks),
+		SuperBlockRanks: make([]uint64, rm.NbSuperBlocks),
+		Blocks:          make([]uint8, rm.NbBlocks),
 		data:            b,
 	}
 	cum := uint64(0)
 	diff := uint8(0)
-	for superBlockIdx := range rk.superBlockRanks {
-		rk.superBlockRanks[superBlockIdx] = cum
-		for _, blockIdx := range rk.blocksIdxForSuperBlock(superBlockIdx) {
+	for superBlockIdx := range rk.SuperBlockRanks {
+		rk.SuperBlockRanks[superBlockIdx] = cum
+		for _, blockIdx := range rk.BlocksIdxForSuperBlock(superBlockIdx) {
 			d := rk.data[blockIdx]
-			rk.blocks[blockIdx] = diff
+			rk.Blocks[blockIdx] = diff
 			diff += uint8(bits.OnesCount64(d))
 			cum += uint64(bits.OnesCount64(d))
 		}

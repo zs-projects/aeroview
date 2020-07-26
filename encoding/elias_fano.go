@@ -4,14 +4,17 @@ import (
 	"math"
 
 	"zs-project.org/aeroview/datastructures"
+	"zs-project.org/aeroview/rank"
 )
 
 // EliasFanoVector encodes a list of ascending integers using the Elias Fano Code.
 type EliasFanoVector struct {
-	highBits     datastructures.BitQueue
-	lowBits      datastructures.BitQueue
-	nElements    int // the number of elements in the data structure.
-	lowBitsCount int // The number of bits used to encode the low bits.
+	highBits      datastructures.BitQueue
+	lowBits       datastructures.BitQueue
+	rank          rank.Ranker
+	nElements     int // the number of elements in the data structure.
+	lowBitsCount  int // The number of bits used to encode the low bits.
+	highBitsCount int // The number of bits used to encode the low bits.
 }
 
 // MakeEliasFanoVector encodes a list of uint64 using EliasFano Code.
