@@ -3,7 +3,7 @@ package selecter
 import "zs-project.org/aeroview/rank"
 
 type BinarySearchSelect struct {
-	rank.RankPopCount
+	rank.PopCount
 	Data rank.BitVec
 }
 
