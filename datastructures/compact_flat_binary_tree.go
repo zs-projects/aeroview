@@ -8,5 +8,4 @@ type CompactFBTree struct {
 }
 
 func FromFBTree(u FBTree) {
-
 }

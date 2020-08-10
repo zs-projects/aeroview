@@ -11,7 +11,7 @@ import (
 type EliasFanoVector struct {
 	highBits      datastructures.BitQueue
 	lowBits       datastructures.BitQueue
-	rank          rank.Ranker
+	rank          rank.PopCount
 	nElements     int // the number of elements in the data structure.
 	lowBitsCount  int // The number of bits used to encode the low bits.
 	highBitsCount int // The number of bits used to encode the low bits.
@@ -42,10 +42,11 @@ func MakeEliasFanoVector(values []uint64) EliasFanoVector {
 		}
 		prev = highBits
 	}
-
+	r := rank.MakePopCount(highBitsQ.AsBitVec())
 	return EliasFanoVector{
 		highBits:     highBitsQ,
 		lowBits:      lowBitsQ,
+		rank:         r,
 		nElements:    len(values),
 		lowBitsCount: int(lowerBitCount),
 	}
@@ -68,16 +69,7 @@ func (e EliasFanoVector) Get(i int) (uint64, bool) {
 	if i >= e.nElements {
 		return 0, false
 	}
-	cursor := 0
-	highBit := 0
-	for j := 0; j < e.highBits.Len(); j++ {
-		v := e.highBits.Get(j)
-		highBit += int((v + 1) & 0b1) // if v == 0
-		cursor += int(v & 0b1)        // if v == 1
-		if cursor == i+1 {
-			break
-		}
-	}
+	highBit := e.rank.Select(uint64(i+1)) - uint64(i+1)
 	num := uint64(highBit)
 	lowBitsPosition := e.lowBitsCount * i
 	for k := 0; k < e.lowBitsCount; k++ {

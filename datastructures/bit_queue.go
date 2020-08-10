@@ -2,6 +2,9 @@ package datastructures
 
 import (
 	"fmt"
+	"math"
+
+	"zs-project.org/aeroview/rank"
 )
 
 // BitQueue A queue to store bits with a []]byte underlying storage.
@@ -30,6 +33,42 @@ func MakeBitQueueFromSlice(b []byte, size int) (BitQueue, error) {
 		remainingCapacity: uint8(len(b)*8 - size),
 		cursor:            0,
 	}, nil
+}
+
+// AsBitVec returns a BitVec from a bitQueue
+func (m BitQueue) AsBitVec() rank.BitVec {
+	l := int(math.Max(float64(len(m.bits)/8), 1))
+	vec := make([]uint64, l)
+	for k, v := range m.bits {
+		idx := k / 8
+		switch k % 8 {
+		case 0:
+			u := uint64(v) << (63 - 8*1)
+			vec[idx] += u
+		case 1:
+			u := uint64(v) << (63 - 8*2)
+			vec[idx] += u
+		case 2:
+			u := uint64(v) << (63 - 8*3)
+			vec[idx] += u
+		case 3:
+			u := uint64(v) << (63 - 8*4)
+			vec[idx] += u
+		case 4:
+			u := uint64(v) << (63 - 8*5)
+			vec[idx] += u
+		case 5:
+			u := uint64(v) << (63 - 8*6)
+			vec[idx] += u
+		case 6:
+			u := uint64(v) << (63 - 8*7)
+			vec[idx] += u
+		case 7:
+			u := uint64(v)
+			vec[idx] += u
+		}
+	}
+	return rank.BitVec(vec)
 }
 
 // Len returns the number of bits stored.

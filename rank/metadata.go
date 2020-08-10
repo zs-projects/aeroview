@@ -11,7 +11,7 @@ type metadata struct {
 
 func makeRankMetadata(blockSize int, nbBits int) metadata {
 	nbBlocks := ceil_devide(nbBits, blockSize)
-	nbSuperBlocks := floor_devide(nbBits, blockSize*nbBits_floor(nbBits))
+	nbSuperBlocks := valueOrOne(floor_devide(nbBits, blockSize*nbBits_floor(nbBits)))
 	superBlockSize := (nbBits / nbSuperBlocks) - (nbBits/nbSuperBlocks)%blockSize
 	blocksPerSuperBlock := nbBlocks / nbSuperBlocks
 	return metadata{
@@ -43,4 +43,11 @@ func (r metadata) blocksIdxForSuperBlock(i int) (int, int) {
 		upper = r.NbBlocks
 	}
 	return lower, upper - 1
+}
+
+func valueOrOne(i int) int {
+	if i <= 0 {
+		return 1
+	}
+	return i
 }

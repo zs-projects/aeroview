@@ -60,14 +60,14 @@ func (r PopCount) Rank(idx int) int {
 func (r PopCount) Select(idx uint64) uint64 {
 	spBlock := r.identifySuperBlock(idx)
 	spBlockRank := r.SuperBlockRanks[spBlock]
-	if spBlockRank >= idx {
+	if spBlockRank >= idx && spBlock > 0 {
 		spBlock--
 	}
 	spBlockRank = r.SuperBlockRanks[spBlock]
 	lower, upper := r.blocksIdxForSuperBlock(spBlock)
 	blockIdx := r.identifyBlock(idx, spBlockRank, lower, upper) + lower
 	blockDiffRank := uint64(r.Blocks[blockIdx])
-	if spBlockRank+blockDiffRank >= idx {
+	if spBlockRank+blockDiffRank >= idx && blockIdx > 0 {
 		blockIdx--
 	}
 	blockDiffRank = uint64(r.Blocks[blockIdx])
