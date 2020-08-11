@@ -14,7 +14,7 @@ type PopCount struct {
 	metadata
 	SuperBlockRanks []uint64
 	Blocks          []uint8
-	data            BitVec
+	Data            BitVec
 }
 
 // MakePopCount creates a RankPopCount instance.
@@ -26,7 +26,7 @@ func MakePopCount(b BitVec) PopCount {
 		metadata:        rm,
 		SuperBlockRanks: make([]uint64, rm.NbSuperBlocks),
 		Blocks:          make([]uint8, rm.NbBlocks),
-		data:            b,
+		Data:            b,
 	}
 	cum := uint64(0)
 	diff := uint8(0)
@@ -34,7 +34,7 @@ func MakePopCount(b BitVec) PopCount {
 		rk.SuperBlockRanks[superBlockIdx] = cum
 		lower, upper := rk.blocksIdxForSuperBlock(superBlockIdx)
 		for blockIdx := lower; blockIdx <= upper; blockIdx++ {
-			d := rk.data[blockIdx]
+			d := rk.Data[blockIdx]
 			rk.Blocks[blockIdx] = diff
 			diff += uint8(bits.OnesCount64(d))
 			cum += uint64(bits.OnesCount64(d))
@@ -52,7 +52,7 @@ func (r PopCount) Rank(idx int) int {
 	rankSuperBlock := r.SuperBlockRanks[spblocIdx]
 	blockRank := uint64(r.Blocks[blockIdx])
 	dataIdx := idx / BLOCKSIZE
-	pop := uint64(bits.OnesCount64(r.data[dataIdx] >> shift))
+	pop := uint64(bits.OnesCount64(r.Data[dataIdx] >> shift))
 	return int(rankSuperBlock + blockRank + pop)
 }
 
@@ -71,7 +71,7 @@ func (r PopCount) Select(idx uint64) uint64 {
 		blockIdx--
 	}
 	blockDiffRank = uint64(r.Blocks[blockIdx])
-	d := r.data[blockIdx]
+	d := r.Data[blockIdx]
 	bDiffRank := int(blockDiffRank + spBlockRank)
 	for i := 63; i >= 0; i-- {
 		if bits.OnesCount64(d>>i)+bDiffRank == int(idx) {
@@ -122,4 +122,8 @@ func (r PopCount) identifyBlock(i, supBlockValue uint64, lowerBlockIdx, upperBlo
 		}
 	}
 	return pos
+}
+
+func (r PopCount) Get(idx int) int {
+	return r.Data.Get(idx)
 }

@@ -25,7 +25,7 @@ func TestPopCount(t *testing.T) {
 	}
 	fmt.Println(rpc.Overhead())
 	for i := 0; i < size*64; i++ {
-		expected := countBits(i, rpc.data)
+		expected := countBits(i, rpc.Data)
 		actual := rpc.Rank(i)
 		assert.EqualValues(t, expected, actual)
 	}
