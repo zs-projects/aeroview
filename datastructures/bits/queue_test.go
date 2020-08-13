@@ -94,3 +94,22 @@ func TestBitQueueHigh(t *testing.T) {
 		t.Errorf("BitQueue Set Failed.")
 	}
 }
+
+func TestBitQueueGet(t *testing.T) {
+	b := MakeQueue()
+	b.PushBack(1)
+	b.PushBack(0)
+	b.PushBack(1)
+
+	b.Append([]uint64{uint64(0b10110100)}, 6)
+	if b.data[0] != uint64(0b00110100101) {
+		t.Errorf("BitQueue Set Failed.")
+	}
+	if b.Get(0) != uint64(0b1) {
+		t.Errorf("BitQueue Set Failed.")
+	}
+	if b.Get(6) != uint64(0b0) {
+		t.Errorf("BitQueue Set Failed.")
+	}
+
+}

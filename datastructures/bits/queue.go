@@ -6,7 +6,7 @@ import (
 
 // Queue implements a FIFO queue on top of BitVec.
 type Queue struct {
-	data BitVec
+	data Vector
 	// cursor represent the position of the next free bit.
 	cursor int
 	// remainingCapacity is the number of unused bits in the current word.
@@ -32,6 +32,11 @@ func MakeBitQueueFromSlice(b []uint64, size int) (Queue, error) {
 		remainingCapacity: int8(len(b)*BLOCKSIZE - size),
 		cursor:            0,
 	}, nil
+}
+
+// Len returns the number of bits stored.
+func (m Queue) Vector() Vector {
+	return Vector(m.data)
 }
 
 // Len returns the number of bits stored.

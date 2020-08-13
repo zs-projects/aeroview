@@ -43,25 +43,25 @@ func (m BitQueue) AsBitVec() rank.BitVec {
 		idx := k / 8
 		switch k % 8 {
 		case 0:
-			u := uint64(v) << (64 - 8*1)
+			u := uint64(v) << (63 - 8*1)
 			vec[idx] += u
 		case 1:
-			u := uint64(v) << (64 - 8*2)
+			u := uint64(v) << (63 - 8*2)
 			vec[idx] += u
 		case 2:
-			u := uint64(v) << (64 - 8*3)
+			u := uint64(v) << (63 - 8*3)
 			vec[idx] += u
 		case 3:
-			u := uint64(v) << (64 - 8*4)
+			u := uint64(v) << (63 - 8*4)
 			vec[idx] += u
 		case 4:
-			u := uint64(v) << (64 - 8*5)
+			u := uint64(v) << (63 - 8*5)
 			vec[idx] += u
 		case 5:
-			u := uint64(v) << (64 - 8*6)
+			u := uint64(v) << (63 - 8*6)
 			vec[idx] += u
 		case 6:
-			u := uint64(v) << (64 - 8*7)
+			u := uint64(v) << (63 - 8*7)
 			vec[idx] += u
 		case 7:
 			u := uint64(v)
