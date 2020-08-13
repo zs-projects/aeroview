@@ -1,6 +1,7 @@
 package encoding
 
 import (
+	"fmt"
 	"math"
 
 	"zs-project.org/aeroview/datastructures"
@@ -65,9 +66,9 @@ func (e EliasFanoVector) Data() ([]byte, int) {
 }
 
 // Get Returns the element at index i
-func (e EliasFanoVector) Get(i int) (uint64, bool) {
+func (e EliasFanoVector) Get(i int) uint64 {
 	if i >= e.nElements {
-		return 0, false
+		panic(fmt.Sprintf("Trying to access element with index %v on EliasFanoVector on length %v", i, e.nElements))
 	}
 	highBit := e.rank.Select(uint64(i+1)) - uint64(i+1)
 	num := uint64(highBit)
@@ -75,5 +76,5 @@ func (e EliasFanoVector) Get(i int) (uint64, bool) {
 	for k := 0; k < e.lowBitsCount; k++ {
 		num = (num << 1) | uint64(e.lowBits.Get(lowBitsPosition+k))
 	}
-	return num, true
+	return num
 }

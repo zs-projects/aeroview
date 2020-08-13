@@ -1,4 +1,4 @@
-package datastructures
+package trees
 
 type TRIE struct {
 	children map[rune]*TRIE

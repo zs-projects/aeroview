@@ -14,7 +14,7 @@ func TestEliasFanoVector(t *testing.T) {
 		t.Errorf("Elias Fano encoding failed.%v \t %v \n", val, length)
 	}
 	for i, v := range values {
-		if out, ok := vec.Get(i); !ok || v != out {
+		if out := vec.Get(i); out != v {
 			t.Errorf("Get(%v) method for Elias Fano encoding failed got %v \t expected %v \n", i, out, v)
 		}
 	}

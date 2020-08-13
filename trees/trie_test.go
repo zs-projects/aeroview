@@ -1,4 +1,4 @@
-package datastructures
+package trees
 
 import (
 	"bytes"

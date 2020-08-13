@@ -1,4 +1,4 @@
-package datastructures
+package trees
 
 type RadixTree struct {
 	children map[string]*RadixTree
