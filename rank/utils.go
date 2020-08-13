@@ -5,14 +5,6 @@ import (
 	"math/bits"
 )
 
-func Make8BitLookup() [256]uint8 {
-	var lookup [256]uint8
-	for i := uint8(0); i <= 255; i++ {
-		lookup[i] = uint8(bits.OnesCount8(i & 255))
-	}
-	return lookup
-}
-
 func count(n int) int {
 	nBits := 0
 	for n != 0 {

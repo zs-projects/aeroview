@@ -1,7 +1,9 @@
 package rank
 
 import (
-	"math/bits"
+	mbits "math/bits"
+
+	"zs-project.org/aeroview/datastructures/bits"
 )
 
 const (
@@ -14,13 +16,13 @@ type PopCount struct {
 	metadata
 	SuperBlockRanks []uint64
 	Blocks          []uint8
-	Data            BitVec
+	Data            bits.Vector
 }
 
 // MakePopCount creates a RankPopCount instance.
-func MakePopCount(b BitVec) PopCount {
+func MakePopCount(b bits.Vector) PopCount {
 	// Blocksize is 64 bits for mecanichal sympathy.
-	rm := makeRankMetadata(blockSize, len(b)*64)
+	rm := makeRankMetadata(BLOCKSIZE, len(b)*64)
 
 	rk := PopCount{
 		metadata:        rm,
@@ -36,8 +38,8 @@ func MakePopCount(b BitVec) PopCount {
 		for blockIdx := lower; blockIdx <= upper; blockIdx++ {
 			d := rk.Data[blockIdx]
 			rk.Blocks[blockIdx] = diff
-			diff += uint8(bits.OnesCount64(d))
-			cum += uint64(bits.OnesCount64(d))
+			diff += uint8(mbits.OnesCount64(d))
+			cum += uint64(mbits.OnesCount64(d))
 		}
 		diff = 0
 	}
@@ -52,7 +54,7 @@ func (r PopCount) Rank(idx int) int {
 	rankSuperBlock := r.SuperBlockRanks[spblocIdx]
 	blockRank := uint64(r.Blocks[blockIdx])
 	dataIdx := idx / BLOCKSIZE
-	pop := uint64(bits.OnesCount64(r.Data[dataIdx] >> shift))
+	pop := uint64(mbits.OnesCount64(r.Data[dataIdx] >> shift))
 	return int(rankSuperBlock + blockRank + pop)
 }
 
@@ -74,7 +76,7 @@ func (r PopCount) Select(idx uint64) uint64 {
 	d := r.Data[blockIdx]
 	bDiffRank := int(blockDiffRank + spBlockRank)
 	for i := 63; i >= 0; i-- {
-		if bits.OnesCount64(d>>i)+bDiffRank == int(idx) {
+		if mbits.OnesCount64(d>>i)+bDiffRank == int(idx) {
 			return uint64(blockIdx*r.BlockSize+(r.BlockSize-i)) - 1
 		}
 	}

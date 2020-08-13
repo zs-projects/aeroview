@@ -1,17 +1,19 @@
 package rank
 
+import "zs-project.org/aeroview/datastructures/bits"
+
 type BabyRank struct {
-	bits   *BitVec
+	bits   *bits.Vector
 	data   []uint64
 	lookup [256]uint8
 }
 
 func NewBabyRank(xs []uint64) *BabyRank {
 
-	lookup := Make8BitLookup()
+	lookup := bits.Make8BitLookup()
 
 	nBigBlocks := len(xs) / 64
-	bits := NewBitVec(nBigBlocks)
+	bits := bits.NewVector(nBigBlocks)
 
 	var data []uint64
 	for i, x := range xs {
