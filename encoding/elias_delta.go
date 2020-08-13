@@ -3,7 +3,7 @@ package encoding
 import (
 	"math"
 
-	"zs-project.org/aeroview/datastructures"
+	"zs-project.org/aeroview/datastructures/bits"
 )
 
 // EliasDeltaEncoding encode positive integers using elias code.
@@ -11,8 +11,8 @@ type EliasDeltaEncoding struct{}
 
 // Encode64 encodes a slice of sorted ascending list of uint32 int
 // TODO take into account the fact that the array is sorted to encode things .
-func (EliasDeltaEncoding) Encode64(v uint64) ([]byte, int) {
-	b := datastructures.MakeBitQueue()
+func (EliasDeltaEncoding) Encode64(v uint64) ([]uint64, int) {
+	b := bits.MakeQueue()
 	// N such that such that X between 2^N and 2^(N+1)
 	N := int64(math.Floor(math.Log2(float64(v))))
 	N1 := 1 + N
@@ -23,17 +23,17 @@ func (EliasDeltaEncoding) Encode64(v uint64) ([]byte, int) {
 	}
 	//
 	for i := nbBitsOfN1; i >= 0; i-- {
-		b.PushBack(uint8(N1 >> i))
+		b.PushBack(uint64(N1 >> i))
 	}
 	for i := N1 - 2; i >= 0; i-- {
-		b.PushBack(uint8(v >> i))
+		b.PushBack(uint64(v >> i))
 	}
 	return b.Data(), b.Len()
 }
 
 // Decode64 encodes a slice of sorted ascending list of uint32 int
-func (EliasDeltaEncoding) Decode64(b []byte, size int) (uint64, error) {
-	bq, err := datastructures.MakeBitQueueFromSlice(b, size)
+func (EliasDeltaEncoding) Decode64(b []uint64, size int) (uint64, error) {
+	bq, err := bits.MakeBitQueueFromSlice(b, size)
 	if err != nil {
 		return 0, err
 	}

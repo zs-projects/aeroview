@@ -1,6 +1,9 @@
-package datastructures
+package trees
 
-import "zs-project.org/aeroview/rank"
+import (
+	"zs-project.org/aeroview/datastructures/bits"
+	"zs-project.org/aeroview/rank"
+)
 
 type CompactFBTree struct {
 	nodes     []FBValue
@@ -8,9 +11,9 @@ type CompactFBTree struct {
 }
 
 func FromFBTree(u FBTree) CompactFBTree {
-	q := MakeBitQueue()
+	q := bits.MakeQueue()
 	nodes := compressStructure(&q, &u)
-	b := q.AsBitVec()
+	b := q.Vector()
 	pc := rank.MakePopCount(b)
 	return CompactFBTree{
 		nodes:     nodes,
@@ -51,7 +54,7 @@ func (c CompactFBTree) nodeHasLeftChild(node FBNode) bool {
 	return exists == 1
 }
 
-func compressStructure(q *BitQueue, u *FBTree) []FBValue {
+func compressStructure(q *bits.Queue, u *FBTree) []FBValue {
 	nodesQueue := make([]*FBNode, 0)
 	nodesQueue = append(nodesQueue, u.Root())
 	nodes := make([]FBValue, 0)

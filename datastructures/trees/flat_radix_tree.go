@@ -3,7 +3,7 @@ package trees
 import (
 	"strings"
 
-	"zs-project.org/aeroview/datastructures"
+	"zs-project.org/aeroview/datastructures/bits"
 	"zs-project.org/aeroview/encoding"
 	"zs-project.org/aeroview/rank"
 )
@@ -13,7 +13,7 @@ type FlatRadixTree struct {
 	offsetsStart encoding.EliasFanoVector
 	offsetsStop  encoding.EliasFanoVector
 	structure    rank.PopCount
-	leafs        datastructures.BitQueue
+	leafs        bits.Queue
 	maxChildren  int
 }
 
@@ -48,8 +48,8 @@ func MakeFlatRadixTree(r RadixTree) FlatRadixTree {
 	}
 
 	maxChildren := MaxNonEmptyIntSlice(structure)
-	bitQueueStructure := datastructures.MakeBitQueue()
-	bitQueueLeafs := datastructures.MakeBitQueue()
+	bitQueueStructure := bits.MakeQueue()
+	bitQueueLeafs := bits.MakeQueue()
 	for idx, nbChilds := range structure {
 		for i := 0; i < nbChilds; i++ {
 			bitQueueStructure.PushBack(1)
@@ -68,7 +68,7 @@ func MakeFlatRadixTree(r RadixTree) FlatRadixTree {
 		data:         data,
 		offsetsStart: encoding.MakeEliasFanoVector(offsetsStart),
 		offsetsStop:  encoding.MakeEliasFanoVector(offsetsStop),
-		structure:    rank.MakePopCount(bitQueueStructure.AsBitVec()),
+		structure:    rank.MakePopCount(bitQueueStructure.Vector()),
 		leafs:        bitQueueLeafs,
 		maxChildren:  maxChildren,
 	}

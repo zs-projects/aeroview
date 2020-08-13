@@ -1,4 +1,4 @@
-package datastructures
+package trees
 
 import (
 	"math"
@@ -55,8 +55,8 @@ func TestMakeFBTreeFromLeafs(t *testing.T) {
 	if !reflect.DeepEqual(expectedNodes, fbt.nodes[:12]) {
 		t.Errorf("node layout is not good, expected %v \n got %v", expectedNodes, fbt.nodes)
 	}
-	if !reflect.DeepEqual(fbt.structure.bits, expectedStructure) {
-		t.Errorf("node structure is not good, expected %v \n got %v", expectedStructure, fbt.structure.bits)
+	if !reflect.DeepEqual(fbt.structure.Data, expectedStructure) {
+		t.Errorf("node structure is not good, expected %v \n got %v", expectedStructure, fbt.structure.Data())
 	}
 	r := fbt.Root()
 	if r.Value.R != 5 {

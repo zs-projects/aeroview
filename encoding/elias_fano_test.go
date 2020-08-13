@@ -1,7 +1,7 @@
 package encoding
 
 import (
-	"bytes"
+	"reflect"
 	"testing"
 )
 
@@ -10,7 +10,7 @@ func TestEliasFanoVector(t *testing.T) {
 	values := []uint64{5, 8, 8, 15, 32}
 	vec := MakeEliasFanoVector(values)
 	val, length := vec.Data()
-	if !bytes.Equal(val, []byte{90, 10, 24}) || length != 23 {
+	if !reflect.DeepEqual(val, []uint64{uint64(0b01011010000010100001100)}) || length != 23 {
 		t.Errorf("Elias Fano encoding failed.%v \t %v \n", val, length)
 	}
 	for i, v := range values {

@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"math"
 
-	"zs-project.org/aeroview/datastructures"
+	"zs-project.org/aeroview/datastructures/bits"
 	"zs-project.org/aeroview/rank"
 )
 
 // EliasFanoVector encodes a list of ascending integers using the Elias Fano Code.
 type EliasFanoVector struct {
-	highBits      datastructures.BitQueue
-	lowBits       datastructures.BitQueue
+	highBits      bits.Queue
+	lowBits       bits.Queue
 	rank          rank.PopCount
 	nElements     int // the number of elements in the data structure.
 	lowBitsCount  int // The number of bits used to encode the low bits.
@@ -20,8 +20,8 @@ type EliasFanoVector struct {
 
 // MakeEliasFanoVector encodes a list of uint64 using EliasFano Code.
 func MakeEliasFanoVector(values []uint64) EliasFanoVector {
-	lowBitsQ := datastructures.MakeBitQueue()
-	highBitsQ := datastructures.MakeBitQueue()
+	lowBitsQ := bits.MakeQueue()
+	highBitsQ := bits.MakeQueue()
 	lowerBitCount := uint64(math.Log2(float64(len(values))))
 	lowBitsMask := uint64(1)<<lowerBitCount - 1
 	prev := uint64(0)
@@ -31,7 +31,7 @@ func MakeEliasFanoVector(values []uint64) EliasFanoVector {
 		lowBits := v & lowBitsMask
 		highDelta := highBits - prev
 		for k := lowerBitCount; k > 0; k-- {
-			lowBitsQ.PushBack(uint8(lowBits >> (k - 1)))
+			lowBitsQ.PushBack(uint64(lowBits >> (k - 1)))
 		}
 		if highDelta == 0 {
 			highBitsQ.PushBack(1)
@@ -43,7 +43,7 @@ func MakeEliasFanoVector(values []uint64) EliasFanoVector {
 		}
 		prev = highBits
 	}
-	r := rank.MakePopCount(highBitsQ.AsBitVec())
+	r := rank.MakePopCount(highBitsQ.Vector())
 	return EliasFanoVector{
 		highBits:     highBitsQ,
 		lowBits:      lowBitsQ,
@@ -59,8 +59,8 @@ func (e EliasFanoVector) Len() int {
 }
 
 // Data returns the raw elias-fano encoded array.
-func (e EliasFanoVector) Data() ([]byte, int) {
-	result, _ := datastructures.MakeBitQueueFromSlice(e.highBits.Data(), e.highBits.Len())
+func (e EliasFanoVector) Data() ([]uint64, int) {
+	result, _ := bits.MakeBitQueueFromSlice(e.highBits.Data(), e.highBits.Len())
 	result.Append(e.lowBits.Data(), e.lowBits.Len())
 	return result.Data(), result.Len()
 }
