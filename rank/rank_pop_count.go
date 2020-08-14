@@ -50,11 +50,12 @@ func MakePopCount(b bits.Vector) PopCount {
 func (r PopCount) Rank(idx int) int {
 	spblocIdx := idx / r.metadata.SuperBlockSize
 	blockIdx := idx / BLOCKSIZE
-	shift := BLOCKSIZE - idx%BLOCKSIZE - 1
 	rankSuperBlock := r.SuperBlockRanks[spblocIdx]
 	blockRank := uint64(r.Blocks[blockIdx])
 	dataIdx := idx / BLOCKSIZE
-	pop := uint64(mbits.OnesCount64(r.Data[dataIdx] >> shift))
+	shift := idx % BLOCKSIZE
+	mask := uint64(1<<(shift+1) - 1)
+	pop := uint64(mbits.OnesCount64(r.Data[dataIdx] & mask))
 	return int(rankSuperBlock + blockRank + pop)
 }
 
@@ -75,9 +76,11 @@ func (r PopCount) Select(idx uint64) uint64 {
 	blockDiffRank = uint64(r.Blocks[blockIdx])
 	d := r.Data[blockIdx]
 	bDiffRank := int(blockDiffRank + spBlockRank)
-	for i := 63; i >= 0; i-- {
-		if mbits.OnesCount64(d>>i)+bDiffRank == int(idx) {
-			return uint64(blockIdx*r.BlockSize+(r.BlockSize-i)) - 1
+	for i := 0; i < r.BlockSize; i++ {
+		mask := uint64(1)<<(i+1) - 1
+		dr := mbits.OnesCount64(d & mask)
+		if dr+bDiffRank == int(idx) {
+			return uint64(blockIdx*r.BlockSize + i)
 		}
 	}
 	return uint64(0)

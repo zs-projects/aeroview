@@ -31,7 +31,7 @@ func TestPopCount(t *testing.T) {
 	}
 	selectCnt := make(map[int]int)
 	prev := 0
-	for i := 0; i < size*64; i++ {
+	for i := 0; i < nbOnes; i++ {
 		actual := rpc.Rank(i)
 		if actual != prev {
 			selectCnt[actual] = i
@@ -45,7 +45,7 @@ func TestPopCount(t *testing.T) {
 			fmt.Println(actual, expected)
 			rpc.Select(uint64(i))
 		}
-		assert.EqualValues(t, expected, actual)
+		assert.EqualValues(t, expected, actual, fmt.Sprintf("for position %v", i))
 	}
 }
 
@@ -55,7 +55,8 @@ func countBits(idx int, data []uint64) int {
 	for k := 0; k < j; k++ {
 		acc += bits.OnesCount64(data[k])
 	}
-	shift := BLOCKSIZE - idx%BLOCKSIZE - 1
-	acc += bits.OnesCount64(data[j] >> shift)
+	shift := idx % BLOCKSIZE
+	mask := uint64(1<<(shift+1) - 1)
+	acc += bits.OnesCount64(data[j] & mask)
 	return int(acc)
 }
