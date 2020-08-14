@@ -25,8 +25,8 @@ func (c CompactFBTree) Root() *FBNode {
 }
 func (c CompactFBTree) LeftChild(u *FBNode) *FBNode {
 	if c.nodeHasLeftChild(*u) {
-		rk := c.structure.Rank(u.offset)
-		position := 2*rk - 1
+		rk := c.structure.Rank(u.offset) // We are indexing from 0
+		position := 2*rk + 1             // To account for the fact that root has index 0
 		return c.node(position)
 	}
 	return nil
@@ -35,26 +35,28 @@ func (c CompactFBTree) LeftChild(u *FBNode) *FBNode {
 func (c CompactFBTree) RightChild(u *FBNode) *FBNode {
 	if c.nodeHasRightChild(*u) {
 		rk := c.structure.Rank(u.offset)
-		position := 2 * rk
+		position := 2*rk + 2 // To account for the fact that root has index 0
 		return c.node(position)
 	}
 	return nil
 }
 
-func (c CompactFBTree) nodeHasRightChild(node FBNode) bool {
-	rk := c.structure.Rank(node.offset)
-	position := 2 * rk
-	return c.structure.Get(64-position) == 1
-}
-
 func (c CompactFBTree) nodeHasLeftChild(node FBNode) bool {
-	rk := c.structure.Rank(node.offset)
-	position := 2*rk - 1
-	exists := c.structure.Get(64 - position)
+	offset := node.offset
+	rk := c.structure.Rank(offset)
+	position := 2*rk + 1
+	exists := c.structure.Get(position)
 	return exists == 1
 }
 
+func (c CompactFBTree) nodeHasRightChild(node FBNode) bool {
+	rk := c.structure.Rank(node.offset)
+	position := 2*rk + 2
+	return c.structure.Get(position) == 1
+}
+
 func compressStructure(q *bits.Queue, u *FBTree) []FBValue {
+	q.PushBack(0)
 	nodesQueue := make([]*FBNode, 0)
 	nodesQueue = append(nodesQueue, u.Root())
 	nodes := make([]FBValue, 0)
