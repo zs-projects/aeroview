@@ -62,9 +62,8 @@ func TestMakeCompactFBTreeFromLeafs(t *testing.T) {
 	if l.Value.R != 7 {
 		t.Errorf("Left Child of Root of the tree should be 7 got %v", l)
 	}
-	rg := fbt.RightChild(r)
-	if rg.Value.R != 8 {
-		t.Errorf("Right Child of Root of the tree should be 8 got %v", rg)
+	if fbt.IsLeaf(*l) {
+		t.Errorf("Right child of Left Child of Left Child of Root of the tree should be a leaf")
 	}
 	ll := fbt.LeftChild(l)
 	if ll.Value.R != 3 {
@@ -72,6 +71,10 @@ func TestMakeCompactFBTreeFromLeafs(t *testing.T) {
 	}
 	if fbt.IsLeaf(*ll) {
 		t.Errorf("Right child of Left Child of Left Child of Root of the tree should be a leaf")
+	}
+	lr := fbt.RightChild(l)
+	if lr != nil {
+		t.Errorf("Right Child of Left Child of Root should be nil, got %v", lr.Value)
 	}
 	lll := fbt.LeftChild(ll)
 	if lll != nil {
@@ -85,9 +88,22 @@ func TestMakeCompactFBTreeFromLeafs(t *testing.T) {
 		t.Errorf("Right child of Left Child of Left Child of Root of the tree should be a leaf")
 	}
 
-	lr := fbt.RightChild(l)
-	if lr != nil {
-		t.Errorf("Right Child of Left Child of Root should be nil, got %v", lr.Value)
+	rg := fbt.RightChild(r)
+	if rg.Value.R != 8 {
+		t.Errorf("Right Child of Root of the tree should be 8 got %v", rg)
 	}
-
+	rgl := fbt.LeftChild(rg)
+	if rgl.Value.R != 6 {
+		t.Errorf("Left Child of Right Child of Root of the tree should be 6 got %v", rgl)
+	}
+	if fbt.IsLeaf(*rgl) {
+		t.Errorf("Left child of Right Child of Root of the tree should be a leaf")
+	}
+	rgll := fbt.LeftChild(rgl)
+	if rgll.Value.R != 7 {
+		t.Errorf("Left Child Left Child of Right Child of Root of the tree should be 7 got %v", rgll)
+	}
+	if !fbt.IsLeaf(*rgll) {
+		t.Errorf("Left child of Right Child of Root of the tree should be a leaf")
+	}
 }
