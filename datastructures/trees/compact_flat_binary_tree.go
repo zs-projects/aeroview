@@ -60,10 +60,7 @@ func compressStructure(q *bits.Queue, u *FBTree) []FBValue {
 	i := 0
 	for len(nodesQueue) > i {
 		node := nodesQueue[i]
-		if u.IsLeaf(*node) {
-			i++
-			continue
-		}
+		i++
 		if u.nodeHasLeftChild(*node) {
 			q.PushBack(1)
 			left := u.LeftChild(*node)
@@ -80,7 +77,6 @@ func compressStructure(q *bits.Queue, u *FBTree) []FBValue {
 		} else {
 			q.PushBack(0)
 		}
-		i++
 	}
 	return nodes
 }

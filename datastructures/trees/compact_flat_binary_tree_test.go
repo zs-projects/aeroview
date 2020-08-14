@@ -15,25 +15,29 @@ func TestMakeCompactFBTreeFromLeafs(t *testing.T) {
 			   / \     / \
 	          /   \   /   \
 			 3     x 6    11
-			/ \     / \
-		   x   9   7   x
+			/ \     / \   / \
+		   x   9   7   x 15  x
+			  / \       / \
+			 x   4     x  17
+			    / \
+			   2   x
 	*/
-	expectedNodes := []FBValue{{0, 5}, {0, 7}, {0, 8}, {0, 3}, {0, 6}, {0, 11}, {0, 9}, {0, 7}}
-	expectedStructure := []uint64{0b0110110111}
+	expectedNodes := []FBValue{{0, 5}, {0, 7}, {0, 8}, {0, 3}, {0, 6}, {0, 11}, {0, 9}, {0, 7}, {0, 15}, {0, 4}, {0, 17}, {0, 2}}
+	expectedStructure := []uint64{0b01100010010110110111}
 
 	tls := []TreeLeafS{
 		{
 			values: []FBValue{{0, 5}, {0, 7}, {0, 3}, {0, 9}},
 			path:   []bool{false, false, true}},
 		{
-			values: []FBValue{{0, 5}, {0, 7}, {0, 3}, {0, 9}},
-			path:   []bool{false, false, true}},
+			values: []FBValue{{0, 5}, {0, 7}, {0, 3}, {0, 9}, {0, 4}, {0, 2}},
+			path:   []bool{false, false, true, true, false}},
 		{
 			values: []FBValue{{0, 5}, {0, 8}, {0, 6}, {0, 7}},
 			path:   []bool{true, false, false}},
 		{
-			values: []FBValue{{0, 5}, {0, 8}, {0, 11}},
-			path:   []bool{true, true}}}
+			values: []FBValue{{0, 5}, {0, 8}, {0, 11}, {0, 15}, {0, 17}},
+			path:   []bool{true, true, false, true}}}
 	data := make([]TreeLeaf, 0)
 	for _, v := range tls {
 		data = append(data, v)
@@ -49,7 +53,7 @@ func TestMakeCompactFBTreeFromLeafs(t *testing.T) {
 	for i := 0; i < len(ranks); i++ {
 		ranks[i] = fbt.structure.Rank(i)
 	}
-	expectedRanks := []int{1, 2, 3, 3, 4, 5, 5, 6}
+	expectedRanks := []int{1, 2, 3, 3, 4, 5, 5, 6, 7, 7, 8, 8}
 	if !reflect.DeepEqual(ranks, expectedRanks) {
 		t.Errorf("ranks are not good, expected \n %v \n got \n %v", expectedRanks, ranks)
 	}
@@ -84,8 +88,8 @@ func TestMakeCompactFBTreeFromLeafs(t *testing.T) {
 	if llr.Value.R != 9 {
 		t.Errorf("Right child of Left Child of Left Child of Root of the tree should be 9 got %v", llr)
 	}
-	if !fbt.IsLeaf(*llr) {
-		t.Errorf("Right child of Left Child of Left Child of Root of the tree should be a leaf")
+	if fbt.IsLeaf(*llr) {
+		t.Errorf("Right child of Left Child of Left Child of Root of the tree should not be a leaf")
 	}
 
 	rg := fbt.RightChild(r)
