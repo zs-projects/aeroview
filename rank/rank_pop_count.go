@@ -15,7 +15,7 @@ const (
 type PopCount struct {
 	metadata
 	SuperBlockRanks []uint64
-	Blocks          []uint8
+	Blocks          []uint16
 	Data            bits.Vector
 }
 
@@ -27,18 +27,18 @@ func MakePopCount(b bits.Vector) PopCount {
 	rk := PopCount{
 		metadata:        rm,
 		SuperBlockRanks: make([]uint64, rm.NbSuperBlocks),
-		Blocks:          make([]uint8, rm.NbBlocks),
+		Blocks:          make([]uint16, rm.NbBlocks),
 		Data:            b,
 	}
 	cum := uint64(0)
-	diff := uint8(0)
+	diff := uint16(0)
 	for superBlockIdx := range rk.SuperBlockRanks {
 		rk.SuperBlockRanks[superBlockIdx] = cum
 		lower, upper := rk.blocksIdxForSuperBlock(superBlockIdx)
 		for blockIdx := lower; blockIdx <= upper; blockIdx++ {
 			d := rk.Data[blockIdx]
 			rk.Blocks[blockIdx] = diff
-			diff += uint8(mbits.OnesCount64(d))
+			diff += uint16(mbits.OnesCount64(d))
 			cum += uint64(mbits.OnesCount64(d))
 		}
 		diff = 0

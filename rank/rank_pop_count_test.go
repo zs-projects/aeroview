@@ -3,6 +3,7 @@ package rank
 import (
 	"fmt"
 	"math/bits"
+	"math/rand"
 	"testing"
 
 	"github.com/kr/pretty"
@@ -10,14 +11,13 @@ import (
 )
 
 func TestPopCount(t *testing.T) {
-	size := 1000
+	size := 2500
 	xs := make([]uint64, size)
 	nbOnes := 0
 	for i := 0; i < size; i++ {
-		if i%2 == 0 {
-			xs[i] = uint64(i)
-			nbOnes += bits.OnesCount64(uint64(i))
-		}
+		u := rand.Int63()
+		xs[i] = uint64(u)
+		nbOnes += bits.OnesCount64(uint64(u))
 	}
 	rpc := MakePopCount(xs)
 	if len(rpc.Blocks)*8 < len(xs) {
@@ -27,6 +27,10 @@ func TestPopCount(t *testing.T) {
 	for i := 0; i < size*64; i++ {
 		expected := countBits(i, rpc.Data)
 		actual := rpc.Rank(i)
+		if expected != actual {
+			fmt.Println("Shit.")
+			rpc.Rank(i)
+		}
 		assert.EqualValues(t, expected, actual)
 	}
 	selectCnt := make(map[int]int)
