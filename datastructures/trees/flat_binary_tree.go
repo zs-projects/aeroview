@@ -149,7 +149,7 @@ func preallocateFBTree(depth int) FBTree {
 		structure: bits.Queue{},
 	}
 	tr.ensureCapacity(depth)
-	tr.structure.Append(make([]uint64, int(math.Ceil(float64(len(tr.nodes))/8))), len(tr.nodes))
+	tr.structure.Append(make([]uint64, int(math.Ceil(float64(len(tr.nodes))/bits.BLOCKSIZE))), len(tr.nodes))
 	return tr
 }
 

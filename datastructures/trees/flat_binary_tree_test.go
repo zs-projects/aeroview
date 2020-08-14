@@ -33,7 +33,7 @@ func TestMakeFBTreeFromLeafs(t *testing.T) {
 		   x   9   7   x
 	*/
 	expectedNodes := []FBValue{{0, 5}, {0, 7}, {0, 8}, {0, 3}, {0, 0}, {0, 6}, {0, 11}, {0, 0}, {0, 9}, {0, 0}, {0, 0}, {0, 7}}
-	expectedStructure := []byte{0b11101101, 0b00100000, 0, 0}
+	expectedStructure := []uint64{uint64(0b010010110111)}
 	tls := []TreeLeafS{
 		{
 			values: []FBValue{{0, 5}, {0, 7}, {0, 3}, {0, 9}},
@@ -55,7 +55,7 @@ func TestMakeFBTreeFromLeafs(t *testing.T) {
 	if !reflect.DeepEqual(expectedNodes, fbt.nodes[:12]) {
 		t.Errorf("node layout is not good, expected %v \n got %v", expectedNodes, fbt.nodes)
 	}
-	if !reflect.DeepEqual(fbt.structure.Data, expectedStructure) {
+	if !reflect.DeepEqual(fbt.structure.Data(), expectedStructure) {
 		t.Errorf("node structure is not good, expected %v \n got %v", expectedStructure, fbt.structure.Data())
 	}
 	r := fbt.Root()
