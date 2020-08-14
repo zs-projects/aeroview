@@ -74,6 +74,14 @@ func TestMakeCompactFBTreeFromLeafs(t *testing.T) {
 	if lll != nil {
 		t.Errorf(" Left child of Left Child of Left Child of Root of the tree should be nil got %v", lll)
 	}
+	llr := fbt.RightChild(ll)
+	if llr.Value.R != 9 {
+		t.Errorf("Right child of Left Child of Left Child of Root of the tree should be 9 got %v", llr)
+	}
+	if !fbt.IsLeaf(*llr) {
+		t.Errorf("Right child of Left Child of Left Child of Root of the tree should be a leaf")
+	}
+
 	lr := fbt.RightChild(l)
 	if lr != nil {
 		t.Errorf("Right Child of Left Child of Root should be nil, got %v", lr.Value)

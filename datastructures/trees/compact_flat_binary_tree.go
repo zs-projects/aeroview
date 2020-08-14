@@ -26,8 +26,9 @@ func (c CompactFBTree) Root() *FBNode {
 func (c CompactFBTree) LeftChild(u *FBNode) *FBNode {
 	if c.nodeHasLeftChild(*u) {
 		rk := c.structure.Rank(u.offset) // We are indexing from 0
-		position := 2*rk + 1             // To account for the fact that root has index 0
-		return c.node(position)
+		structurePosition := 2*rk + 1    // To account for the fact that root has index 0
+		nodePosition := c.structure.Rank(structurePosition)
+		return c.node(nodePosition)
 	}
 	return nil
 }
@@ -35,8 +36,9 @@ func (c CompactFBTree) LeftChild(u *FBNode) *FBNode {
 func (c CompactFBTree) RightChild(u *FBNode) *FBNode {
 	if c.nodeHasRightChild(*u) {
 		rk := c.structure.Rank(u.offset)
-		position := 2*rk + 2 // To account for the fact that root has index 0
-		return c.node(position)
+		structurePosition := 2*rk + 2 // To account for the fact that root has index 0
+		nodePosition := c.structure.Rank(structurePosition)
+		return c.node(nodePosition)
 	}
 	return nil
 }
@@ -94,4 +96,8 @@ func (f CompactFBTree) node(offset int) *FBNode {
 		offset: offset,
 		Value:  f.nodes[offset],
 	}
+}
+
+func (f CompactFBTree) IsLeaf(node FBNode) bool {
+	return !f.nodeHasLeftChild(node) && !f.nodeHasRightChild(node)
 }
