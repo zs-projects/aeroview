@@ -26,7 +26,7 @@ func makeRankMetadata(blockSize int, nbBits int) metadata {
 
 func (r metadata) Overhead() float64 {
 	sizeOfSuperBlocks := r.NbSuperBlocks * 64
-	sizeOfBlocks := r.NbBlocks * 8
+	sizeOfBlocks := r.NbBlocks * 16
 	sizeOfMetadata := 6 * 64
 	sizeOfData := r.NbBits
 	return float64(sizeOfMetadata+sizeOfData+sizeOfSuperBlocks+sizeOfBlocks) / float64(sizeOfData)
