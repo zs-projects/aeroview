@@ -70,7 +70,7 @@ func (e EliasFanoVector) Get(i int) uint64 {
 	if i >= e.nElements {
 		panic(fmt.Sprintf("Trying to access element with index %v on EliasFanoVector on length %v", i, e.nElements))
 	}
-	highBit := e.rank.Select(uint64(i+1)) - uint64(i+1)
+	highBit := e.rank.Select(uint64(i+1)) - uint64(i)
 	num := uint64(highBit)
 	lowBitsPosition := e.lowBitsCount * i
 	for k := 0; k < e.lowBitsCount; k++ {
