@@ -19,7 +19,7 @@ func TestMakeCompactFBTreeFromLeafs(t *testing.T) {
 		   x   9   7   x
 	*/
 	expectedNodes := []FBValue{{0, 5}, {0, 7}, {0, 8}, {0, 3}, {0, 6}, {0, 11}, {0, 9}, {0, 7}}
-	expectedStructure := []uint64{0b01101101110}
+	expectedStructure := []uint64{0b0110110111}
 
 	tls := []TreeLeafS{
 		{
@@ -49,9 +49,9 @@ func TestMakeCompactFBTreeFromLeafs(t *testing.T) {
 	for i := 0; i < len(ranks); i++ {
 		ranks[i] = fbt.structure.Rank(i)
 	}
-	expectedRanks := []int{0, 1, 2, 3, 3, 4, 5, 5}
+	expectedRanks := []int{1, 2, 3, 3, 4, 5, 5, 6}
 	if !reflect.DeepEqual(ranks, expectedRanks) {
-		t.Errorf("ranks are not good, expected \n %b \n got \n %b", expectedRanks, ranks)
+		t.Errorf("ranks are not good, expected \n %v \n got \n %v", expectedRanks, ranks)
 	}
 
 	r := fbt.Root()
