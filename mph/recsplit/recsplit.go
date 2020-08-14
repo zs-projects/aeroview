@@ -20,7 +20,7 @@ const (
 type Recsplit struct {
 	values [][]byte
 	// One binary tree per bucket.
-	keys    []trees.FBTree
+	keys    []trees.CompactFBTree
 	cumSums []int
 }
 
@@ -37,10 +37,10 @@ func (r Recsplit) GetKey(s string) int {
 		}
 		split := hash(s, uint64(node.Value.R)) % node.Value.NbKeys
 		if split < node.Value.NbKeys/2 {
-			node = tree.LeftChild(*node)
+			node = tree.LeftChild(node)
 		} else {
 			h = h + int(node.Value.NbKeys)/2
-			node = tree.RightChild(*node)
+			node = tree.RightChild(node)
 		}
 
 	}
@@ -142,7 +142,7 @@ func recsplitWorker(wg *sync.WaitGroup, workCount *int64, splits chan recsplitBu
 
 func mphFromRecsplitLeafs(res map[int][]recsplitLeaf, nbBuckets int, values map[string][]byte) Recsplit {
 	mph := Recsplit{
-		keys:    make([]trees.FBTree, nbBuckets),
+		keys:    make([]trees.CompactFBTree, nbBuckets),
 		values:  make([][]byte, len(values)),
 		cumSums: make([]int, 1, nbBuckets),
 	}
@@ -152,7 +152,7 @@ func mphFromRecsplitLeafs(res map[int][]recsplitLeaf, nbBuckets int, values map[
 		for _, leaf := range leafs {
 			tleafs = append(tleafs, leaf)
 		}
-		mph.keys[bucket] = trees.MakeFBTreeFromLeafs(tleafs)
+		mph.keys[bucket] = trees.FromFBTree(trees.MakeFBTreeFromLeafs(tleafs))
 	}
 	for _, value := range mph.keys {
 		cumSum += value.Root().Value.NbKeys
