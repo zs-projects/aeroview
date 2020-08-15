@@ -11,7 +11,6 @@ import (
 type FlatRadixTree struct {
 	data         []rune
 	offsetsStart encoding.EliasFanoVector
-	offsetsStop  encoding.EliasFanoVector
 	structure    rank.PopCount
 	leafs        bits.Queue
 	maxChildren  int
@@ -67,7 +66,6 @@ func MakeFlatRadixTree(r RadixTree) FlatRadixTree {
 	return FlatRadixTree{
 		data:         data,
 		offsetsStart: encoding.MakeEliasFanoVector(offsetsStart),
-		offsetsStop:  encoding.MakeEliasFanoVector(offsetsStop),
 		structure:    rank.MakePopCount(bitQueueStructure.Vector()),
 		leafs:        bitQueueLeafs,
 		maxChildren:  maxChildren,
@@ -102,7 +100,7 @@ func (f FlatRadixTree) Encode(data []string) [][]int {
 		for cur < len(s) {
 			for childIdx := range f.children(node) {
 				start := f.offsetsStart.Get(childIdx)
-				stop := f.offsetsStop.Get(childIdx)
+				stop := f.offsetsStart.Get(childIdx+1) - 1
 				prefix := string(f.data[start:stop])
 				if strings.HasPrefix(s[cur:], prefix) {
 					encoding = append(encoding, childIdx)
