@@ -22,7 +22,11 @@ type EliasFanoVector struct {
 func MakeEliasFanoVector(values []uint64) EliasFanoVector {
 	lowBitsQ := bits.MakeQueue()
 	highBitsQ := bits.MakeQueue()
-	lowerBitCount := uint64(math.Log2(float64(len(values))))
+	lowerBitCount := int64(math.Log2(float64(values[len(values)-1]) / float64(len(values))))
+	if lowerBitCount < 2 {
+		// Trick to handle long arrays of very small 16 bits numbers.
+		lowerBitCount = 2
+	}
 	lowBitsMask := uint64(1)<<lowerBitCount - 1
 	prev := uint64(0)
 	for i := 0; i < len(values); i++ {
