@@ -1,7 +1,9 @@
 package rank
 
+import "zs-project.org/aeroview/datastructures/bits"
+
 type Rank1 struct {
-	bits        *BitVec
+	bits        bits.Vector
 	data        []uint64
 	bigBlocks   []int
 	smallBlocks []uint8
@@ -17,7 +19,7 @@ func (r *Rank1) Get(idx int) uint64 {
 	// 1. get big block
 	bigBlockIndex := idx / bigBlockSize
 	if bigBlockIndex > 0 {
-		sum += r.bigBlocks[bigBlockIndex - 1]
+		sum += r.bigBlocks[bigBlockIndex-1]
 	}
 
 	// 2. get small block sum
@@ -26,23 +28,23 @@ func (r *Rank1) Get(idx int) uint64 {
 	sum += int(r.smallBlocks[smallBlockIndex])
 
 	// 3. get sum from lookup
-	lookupIndex := r.bits.Get8BitRange(idx - smallBlockOffset, idx)
+	lookupIndex := r.bits.Get8BitRange(idx-smallBlockOffset, idx)
 	sum += int(r.lookup[lookupIndex])
 
-	return r.data[sum - 1]
+	return r.data[sum-1]
 }
 
 func NewRank1(xs []uint64) *Rank1 {
-	lookup := Make8BitLookup()
+	lookup := bits.Make8BitLookup()
 
 	nBigBlocks := len(xs) / bigBlockSize
 	bigBlocks := make([]int, nBigBlocks+1)
 
 	nSmallBlocks := len(xs) / smallBlockSize
 	// +2 because front and back padding
-	smallBlocks := make([]uint8, nSmallBlocks + 2)
+	smallBlocks := make([]uint8, nSmallBlocks+2)
 
-	bits := NewBitVec(nBigBlocks)
+	bits := bits.NewVector(nBigBlocks)
 
 	var data []uint64
 	var bigBlockSum int
@@ -51,7 +53,7 @@ func NewRank1(xs []uint64) *Rank1 {
 	for i, x := range xs {
 
 		// keep running sum only within a big block
-		if i % bigBlockSize == 0 {
+		if i%bigBlockSize == 0 {
 			smallBlockSum = 0
 		}
 
@@ -61,7 +63,7 @@ func NewRank1(xs []uint64) *Rank1 {
 			bits.Set(i, 1)
 
 			// 2. big block sum
-			blockIndex := i/bigBlockSize
+			blockIndex := i / bigBlockSize
 			bigBlockSum++
 			bigBlocks[blockIndex] = bigBlockSum
 
@@ -69,14 +71,14 @@ func NewRank1(xs []uint64) *Rank1 {
 			smallBlockSum++
 		}
 
-		smallBlockIndex := i/smallBlockSize
-		if smallBlockIndex % 8 != 7 {
-			smallBlocks[smallBlockIndex + 1] = smallBlockSum
+		smallBlockIndex := i / smallBlockSize
+		if smallBlockIndex%8 != 7 {
+			smallBlocks[smallBlockIndex+1] = smallBlockSum
 		}
 	}
 
 	return &Rank1{
-		bits:        bits,
+		bits:        *bits,
 		data:        data,
 		bigBlocks:   bigBlocks,
 		smallBlocks: smallBlocks,
