@@ -23,6 +23,7 @@ func FromFBTree(u FBTree) CompactFBTree {
 func (c CompactFBTree) Root() *FBNode {
 	return c.node(0)
 }
+
 func (c CompactFBTree) LeftChild(u *FBNode) *FBNode {
 	if c.nodeHasLeftChild(*u) {
 		nodePosition := c.structure.Rank(2 * u.offset)
