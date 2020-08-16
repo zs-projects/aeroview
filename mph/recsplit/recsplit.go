@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 
 	"github.com/twmb/murmur3"
-	"github.com/zs-projects/aeroview/datastructures/trees"
 	"github.com/zs-projects/aeroview/mph/utils"
 )
 
@@ -20,7 +19,7 @@ const (
 type Recsplit struct {
 	values [][]byte
 	// One binary tree per bucket.
-	keys    []trees.CompactFBTree
+	keys    []CompactFBTree
 	cumSums []int
 }
 
@@ -142,17 +141,17 @@ func recsplitWorker(wg *sync.WaitGroup, workCount *int64, splits chan recsplitBu
 
 func mphFromRecsplitLeafs(res map[int][]recsplitLeaf, nbBuckets int, values map[string][]byte) Recsplit {
 	mph := Recsplit{
-		keys:    make([]trees.CompactFBTree, nbBuckets),
+		keys:    make([]CompactFBTree, nbBuckets),
 		values:  make([][]byte, len(values)),
 		cumSums: make([]int, 1, nbBuckets),
 	}
 	cumSum := 0
 	for bucket, leafs := range res {
-		tleafs := make([]trees.TreeLeaf, 0, len(leafs))
+		tleafs := make([]TreeLeaf, 0, len(leafs))
 		for _, leaf := range leafs {
 			tleafs = append(tleafs, leaf)
 		}
-		mph.keys[bucket] = trees.FromFBTree(trees.MakeFBTreeFromLeafs(tleafs))
+		mph.keys[bucket] = FromFBTree(MakeFBTreeFromLeafs(tleafs))
 	}
 	for _, value := range mph.keys {
 		cumSum += value.Root().Value.NbKeys
@@ -175,10 +174,10 @@ type recsplitLeaf struct {
 	recsplitBucket
 }
 
-func (r recsplitLeaf) Values() []trees.FBValue {
-	vals := make([]trees.FBValue, 0, len(r.parents))
+func (r recsplitLeaf) Values() []FBValue {
+	vals := make([]FBValue, 0, len(r.parents))
 	for i, v := range r.parents {
-		vals = append(vals, trees.FBValue{NbKeys: int(r.sizes[i]), R: int(v)})
+		vals = append(vals, FBValue{NbKeys: int(r.sizes[i]), R: int(v)})
 	}
 	return vals
 }
