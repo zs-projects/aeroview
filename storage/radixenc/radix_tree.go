@@ -1,4 +1,4 @@
-package trees
+package radixenc
 
 type RadixTree struct {
 	children map[string]*RadixTree

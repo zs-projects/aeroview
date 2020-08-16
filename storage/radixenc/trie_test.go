@@ -1,4 +1,4 @@
-package trees
+package radixenc
 
 import (
 	"bytes"
