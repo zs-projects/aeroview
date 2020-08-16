@@ -102,6 +102,14 @@ func (m Queue) Get(i int) uint64 {
 	return m.data[position] >> offset & 0b1
 }
 
+// Get return the bit value at position int
+func (m Queue) GetN(i int, n int) uint64 {
+	position := i / BLOCKSIZE
+	offset := i % BLOCKSIZE
+	mask := uint64((1 << (n + 1)) - 1)
+	return m.data[position] >> offset & mask
+}
+
 // Toggle set the bit balue at position i
 // does nothing if i is out of bound
 func (m Queue) Toggle(i int) {

@@ -76,12 +76,13 @@ func (r PopCount) Select(idx uint64) uint64 {
 	blockDiffRank = uint64(r.Blocks[blockIdx])
 	d := r.Data[blockIdx]
 	bDiffRank := int(blockDiffRank + spBlockRank)
+	mask := uint64(1)<<(1) - 1
 	for i := 0; i < r.BlockSize; i++ {
-		mask := uint64(1)<<(i+1) - 1
 		dr := mbits.OnesCount64(d & mask)
 		if dr+bDiffRank == int(idx) {
 			return uint64(blockIdx*r.BlockSize + i)
 		}
+		mask = mask<<1 + 0b1
 	}
 	return uint64(0)
 }
@@ -92,10 +93,10 @@ func (r PopCount) identifySuperBlock(i uint64) int {
 	lo := 0
 	pos := (hi - lo) / 2
 	for hi > lo {
-		if sblocks[pos] < i {
+		if data := sblocks[pos]; data < i {
 			lo = pos + 1
 			pos = (hi-lo)/2 + lo
-		} else if sblocks[pos] > i {
+		} else if data > i {
 			hi = pos - 1
 			pos = (hi-lo)/2 + lo
 		} else {

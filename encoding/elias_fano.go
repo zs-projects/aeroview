@@ -77,6 +77,8 @@ func (e EliasFanoVector) Get(i int) uint64 {
 	highBit := e.rank.Select(uint64(i+1)) - uint64(i)
 	num := uint64(highBit)
 	lowBitsPosition := e.lowBitsCount * i
+	// TODO Fix this version
+	//num = (num << e.lowBitsCount) | uint64(e.lowBits.GetN(lowBitsPosition, e.lowBitsCount))
 	for k := 0; k < e.lowBitsCount; k++ {
 		num = (num << 1) | uint64(e.lowBits.Get(lowBitsPosition+k))
 	}
