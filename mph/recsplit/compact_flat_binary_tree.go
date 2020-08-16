@@ -1,4 +1,4 @@
-package trees
+package recsplit
 
 import (
 	"github.com/zs-projects/aeroview/datastructures/bits"
