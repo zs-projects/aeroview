@@ -12,7 +12,7 @@ func (ml MockLevelOrderer) LevelOrder() []NodeMetadata {
 	return ml.nodes
 }
 
-func TestMakeBitsetBinaryTreeStruct(t *testing.T) {
+func TestMakeCompactBinaryTreeStruct(t *testing.T) {
 	/* We are testing this tree structure :
 					5
 				   / \
@@ -46,7 +46,7 @@ func TestMakeBitsetBinaryTreeStruct(t *testing.T) {
 		},
 	}
 	expectedStructure := uint64(0b01100010010110110111)
-	bbts := MakeBitsetBinaryTreeStructure(lvo)
+	bbts := MakeCompactBinaryTreeStructure(lvo)
 	// Checking for structure
 	for i := 0; i < 24; i++ {
 		bit := bbts.Get(i)

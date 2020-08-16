@@ -7,14 +7,14 @@ import (
 	"github.com/zs-projects/aeroview/rank"
 )
 
-// BitsetBinaryTreeStruct encode the structure of a binary tree
+// CompactBinaryTreeStructure encode the structure of a binary tree
 // in a bitset.
-type BitsetBinaryTreeStruct struct {
+type CompactBinaryTreeStructure struct {
 	rank.GetRanker
 }
 
-// MakeBitsetBinaryTreeStructure make a bitset binary tree structure for a level order traversal of the tree.
-func MakeBitsetBinaryTreeStructure(tr LevelOrderer) BitsetBinaryTreeStruct {
+// MakeCompactBinaryTreeStructure make a bitset binary tree structure for a level order traversal of the tree.
+func MakeCompactBinaryTreeStructure(tr LevelOrderer) CompactBinaryTreeStructure {
 	q := bits.MakeQueue()
 	for _, node := range tr.LevelOrder() {
 		if node.HasLeftChild {
@@ -28,11 +28,11 @@ func MakeBitsetBinaryTreeStructure(tr LevelOrderer) BitsetBinaryTreeStruct {
 			q.PushBack(0)
 		}
 	}
-	return BitsetBinaryTreeStruct{rank.MakePopCount(q.Vector())}
+	return CompactBinaryTreeStructure{rank.MakePopCount(q.Vector())}
 }
 
 // LeftChild return the position of the left child of the node given the position of the current node.
-func (b BitsetBinaryTreeStruct) LeftChild(position int) (int, error) {
+func (b CompactBinaryTreeStructure) LeftChild(position int) (int, error) {
 	if b.HasLeftChild(position) {
 		return b.Rank(2 * position), nil
 	}
@@ -40,7 +40,7 @@ func (b BitsetBinaryTreeStruct) LeftChild(position int) (int, error) {
 }
 
 // RightChild return the position of the right child of the node given the position of the current node.
-func (b BitsetBinaryTreeStruct) RightChild(position int) (int, error) {
+func (b CompactBinaryTreeStructure) RightChild(position int) (int, error) {
 	if b.HasRightChild(position) {
 		return b.Rank(2*position + 1), nil
 	}
@@ -48,12 +48,12 @@ func (b BitsetBinaryTreeStruct) RightChild(position int) (int, error) {
 }
 
 // HasLeftChild return whether the current node has a left child.
-func (b BitsetBinaryTreeStruct) HasLeftChild(position int) bool {
+func (b CompactBinaryTreeStructure) HasLeftChild(position int) bool {
 	return b.Get(2*position) == 1
 
 }
 
 // HasRightChild return whether the current node has a right child.
-func (b BitsetBinaryTreeStruct) HasRightChild(position int) bool {
+func (b CompactBinaryTreeStructure) HasRightChild(position int) bool {
 	return b.Get(2*position+1) == 1
 }
