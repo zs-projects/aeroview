@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math"
 
-	"zs-project.org/aeroview/datastructures/bits"
-	"zs-project.org/aeroview/rank"
+	"github.com/zs-projects/aeroview/datastructures/bits"
+	"github.com/zs-projects/aeroview/rank"
 )
 
 // EliasFanoVector encodes a list of ascending integers using the Elias Fano Code.

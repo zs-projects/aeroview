@@ -47,10 +47,10 @@ func (r *SuffixBlocks) Exists(key string) bool {
 		mid := (left + right) / 2
 		if r.references[mid] == key {
 			return true
-		} else if mid == len(r.references) - 1 && r.references[mid] < key {
+		} else if mid == len(r.references)-1 && r.references[mid] < key {
 			return r.blocks[mid].Exists(r.references[mid], key)
-		} else if mid != 0 && r.references[mid] > key && r.references[mid - 1] < key {
-			return r.blocks[mid - 1].Exists(r.references[mid - 1], key)
+		} else if mid != 0 && r.references[mid] > key && r.references[mid-1] < key {
+			return r.blocks[mid-1].Exists(r.references[mid-1], key)
 		} else if r.references[mid] < key {
 			left = mid + 1
 		} else {

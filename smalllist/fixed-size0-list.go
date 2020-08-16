@@ -66,4 +66,3 @@ func (f *FixedSizedList) Set(index int, value int) {
 	newVal := int64(value << (positionInBlock * int(f.intSize)))
 	f.list[newIndex] |= newVal
 }
-

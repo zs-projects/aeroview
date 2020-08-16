@@ -1,15 +1,16 @@
 package rank
 
 import (
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestB(t *testing.T) {
 	xs := make([]uint64, 1000)
 	for i := 0; i < 1000; i++ {
-		if i % 2 == 0 {
+		if i%2 == 0 {
 			xs[i] = uint64(i)
 		}
 	}
@@ -40,4 +41,3 @@ func TestRank0_Get(t *testing.T) {
 		}
 	}
 }
-

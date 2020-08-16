@@ -4,8 +4,8 @@ import (
 	"errors"
 	"sort"
 
-	"zs-project.org/aeroview/mph/farmhash"
-	"zs-project.org/aeroview/mph/utils"
+	"github.com/zs-projects/aeroview/mph/farmhash"
+	"github.com/zs-projects/aeroview/mph/utils"
 )
 
 const (

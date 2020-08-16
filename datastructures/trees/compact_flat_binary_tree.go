@@ -1,8 +1,8 @@
 package trees
 
 import (
-	"zs-project.org/aeroview/datastructures/bits"
-	"zs-project.org/aeroview/rank"
+	"github.com/zs-projects/aeroview/datastructures/bits"
+	"github.com/zs-projects/aeroview/rank"
 )
 
 type CompactFBTree struct {

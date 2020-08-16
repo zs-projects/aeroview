@@ -5,8 +5,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"zs-project.org/aeroview/analysis/randutils"
-	"zs-project.org/aeroview/encoding"
+	"github.com/zs-projects/aeroview/analysis/randutils"
+	"github.com/zs-projects/aeroview/encoding"
 )
 
 // Observations :

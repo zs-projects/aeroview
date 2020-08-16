@@ -3,7 +3,7 @@ package storage
 import (
 	"encoding/binary"
 
-	"zs-project.org/aeroview/datastructures/bits"
+	"github.com/zs-projects/aeroview/datastructures/bits"
 )
 
 type RestartString struct {

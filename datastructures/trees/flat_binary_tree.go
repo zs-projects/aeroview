@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math"
 
-	"zs-project.org/aeroview/datastructures/bits"
+	"github.com/zs-projects/aeroview/datastructures/bits"
 )
 
 const (

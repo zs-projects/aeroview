@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"zs-project.org/aeroview/analysis/randutils"
-	"zs-project.org/aeroview/encoding"
+	"github.com/zs-projects/aeroview/analysis/randutils"
+	"github.com/zs-projects/aeroview/encoding"
 )
 
 func BenchmarkEliasFanoGet100K(b *testing.B) {

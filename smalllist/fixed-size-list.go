@@ -1,11 +1,10 @@
 package smalllist
 
-
 const blockSize = 64
 
 type FixedSized struct {
-	 size uint64
-	 smalllist []uint64
+	size      uint64
+	smalllist []uint64
 }
 
 func FromSlice(xs []int) *FixedSized {
@@ -18,17 +17,17 @@ func (f *FixedSized) Get(idx int) uint64 {
 
 	// if overflow
 	var x uint64
-	if offset + f.size > blockSize {
+	if offset+f.size > blockSize {
 		// size of the overflow
 		overflow := (offset + f.size) % blockSize
 		// select of msb of size  (blockSize - offset)
-		msb := (f.smalllist[block] >> offset) <<  overflow
+		msb := (f.smalllist[block] >> offset) << overflow
 		// select of lsb of size of overflow in next block
-		lsb := selectLastKBits(f.smalllist[block + 1], overflow)
+		lsb := selectLastKBits(f.smalllist[block+1], overflow)
 		x |= msb
 		x |= lsb
 	} else {
-		x = selectLastKBits(f.smalllist[block] >> offset, f.size)
+		x = selectLastKBits(f.smalllist[block]>>offset, f.size)
 	}
 	return x
 }
@@ -38,7 +37,7 @@ func (f *FixedSized) Set(val uint64, idx int) {
 	block, offset := f.blockAndOffset(idx)
 
 	// if overflow
-	if offset + f.size > blockSize {
+	if offset+f.size > blockSize {
 		// size of the overflow
 		overflow := (offset + f.size) % blockSize
 		// most significant bits only, remove overflow bits
@@ -46,7 +45,7 @@ func (f *FixedSized) Set(val uint64, idx int) {
 		// least significant bits only
 		lsb := selectLastKBits(val, overflow)
 		f.smalllist[block] |= msb << offset
-		f.smalllist[block + 1] |= lsb
+		f.smalllist[block+1] |= lsb
 	} else {
 		f.smalllist[block] |= val << offset
 	}

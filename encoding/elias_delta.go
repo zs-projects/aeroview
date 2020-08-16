@@ -3,7 +3,7 @@ package encoding
 import (
 	"math"
 
-	"zs-project.org/aeroview/datastructures/bits"
+	"github.com/zs-projects/aeroview/datastructures/bits"
 )
 
 // EliasDeltaEncoding encode positive integers using elias code.

@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"zs-project.org/aeroview/analysis/randutils"
-	"zs-project.org/aeroview/rank"
+	"github.com/zs-projects/aeroview/analysis/randutils"
+	"github.com/zs-projects/aeroview/rank"
 )
 
 func BenchmarkRankV01M(b *testing.B) {

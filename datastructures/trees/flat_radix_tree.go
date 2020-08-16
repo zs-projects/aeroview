@@ -3,9 +3,9 @@ package trees
 import (
 	"strings"
 
-	"zs-project.org/aeroview/datastructures/bits"
-	"zs-project.org/aeroview/encoding"
-	"zs-project.org/aeroview/rank"
+	"github.com/zs-projects/aeroview/datastructures/bits"
+	"github.com/zs-projects/aeroview/encoding"
+	"github.com/zs-projects/aeroview/rank"
 )
 
 type FlatRadixTree struct {

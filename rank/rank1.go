@@ -1,6 +1,6 @@
 package rank
 
-import "zs-project.org/aeroview/datastructures/bits"
+import "github.com/zs-projects/aeroview/datastructures/bits"
 
 type Rank1 struct {
 	bits        bits.Vector

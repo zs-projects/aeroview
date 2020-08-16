@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 
 	"github.com/twmb/murmur3"
-	"zs-project.org/aeroview/datastructures/trees"
-	"zs-project.org/aeroview/mph/utils"
+	"github.com/zs-projects/aeroview/datastructures/trees"
+	"github.com/zs-projects/aeroview/mph/utils"
 )
 
 const (
