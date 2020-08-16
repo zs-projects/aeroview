@@ -5,7 +5,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"zs-project.org/aeroview/analysis/arrays/randutils"
+	"zs-project.org/aeroview/analysis/randutils"
 	"zs-project.org/aeroview/encoding"
 )
 

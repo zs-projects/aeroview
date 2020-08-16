@@ -52,10 +52,9 @@ func (r PopCount) Rank(idx int) int {
 	blockIdx := idx / BLOCKSIZE
 	rankSuperBlock := r.SuperBlockRanks[spblocIdx]
 	blockRank := uint64(r.Blocks[blockIdx])
-	dataIdx := idx / BLOCKSIZE
 	shift := idx % BLOCKSIZE
 	mask := uint64(1<<(shift+1) - 1)
-	pop := uint64(mbits.OnesCount64(r.Data[dataIdx] & mask))
+	pop := uint64(mbits.OnesCount64(r.Data[blockIdx] & mask))
 	return int(rankSuperBlock + blockRank + pop)
 }
 
