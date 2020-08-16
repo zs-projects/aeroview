@@ -23,6 +23,11 @@ func MakeEliasFanoVector(values []uint64) EliasFanoVector {
 	lowBitsQ := bits.MakeQueue()
 	highBitsQ := bits.MakeQueue()
 	lowerBitCount := int64(math.Log2(float64(values[len(values)-1]) / float64(len(values))))
+	// Important to ensure mechanical sympathie and that the lower bits of any numbers
+	// will never overleap between two bytes
+	if lowerBitCount%2 != 0 {
+		lowerBitCount = lowerBitCount + 1
+	}
 	if lowerBitCount < 2 {
 		// Trick to handle long arrays of very small 16 bits numbers.
 		lowerBitCount = 2
@@ -34,8 +39,8 @@ func MakeEliasFanoVector(values []uint64) EliasFanoVector {
 		highBits := v >> lowerBitCount
 		lowBits := v & lowBitsMask
 		highDelta := highBits - prev
-		for k := lowerBitCount; k > 0; k-- {
-			lowBitsQ.PushBack(uint64(lowBits >> (k - 1)))
+		for k := int64(0); k < lowerBitCount; k++ {
+			lowBitsQ.PushBack(uint64(lowBits >> k))
 		}
 		if highDelta == 0 {
 			highBitsQ.PushBack(1)
@@ -58,29 +63,26 @@ func MakeEliasFanoVector(values []uint64) EliasFanoVector {
 }
 
 // Len returns the number of bits set in the vector.
-func (e EliasFanoVector) Len() int {
+func (e *EliasFanoVector) Len() int {
 	return e.highBits.Len() + e.lowBits.Len()
 }
 
 // Data returns the raw elias-fano encoded array.
-func (e EliasFanoVector) Data() ([]uint64, int) {
+func (e *EliasFanoVector) Data() ([]uint64, int) {
 	result, _ := bits.MakeBitQueueFromSlice(e.highBits.Data(), e.highBits.Len())
 	result.Append(e.lowBits.Data(), e.lowBits.Len())
 	return result.Data(), result.Len()
 }
 
 // Get Returns the element at index i
-func (e EliasFanoVector) Get(i int) uint64 {
+func (e *EliasFanoVector) Get(i int) uint64 {
 	if i >= e.nElements {
 		panic(fmt.Sprintf("Trying to access element with index %v on EliasFanoVector on length %v", i, e.nElements))
 	}
 	highBit := e.rank.Select(uint64(i+1)) - uint64(i)
 	num := uint64(highBit)
 	lowBitsPosition := e.lowBitsCount * i
-	// TODO Fix this version
-	//num = (num << e.lowBitsCount) | uint64(e.lowBits.GetN(lowBitsPosition, e.lowBitsCount))
-	for k := 0; k < e.lowBitsCount; k++ {
-		num = (num << 1) | uint64(e.lowBits.Get(lowBitsPosition+k))
-	}
+	lowbits := uint64(e.lowBits.GetN(lowBitsPosition, e.lowBitsCount-1))
+	num = (num << e.lowBitsCount) | lowbits
 	return num
 }

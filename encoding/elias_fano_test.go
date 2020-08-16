@@ -10,7 +10,7 @@ func TestEliasFanoVector(t *testing.T) {
 	vec := MakeEliasFanoVector(values)
 	highBits := vec.highBits.Vector()[0]
 	lowBits := vec.lowBits.Vector()[0]
-	if highBits != 0b1000001011010 || lowBits != 0b0011000010 {
+	if highBits != 0b1000001011010 || lowBits != 0b0011000001 {
 		t.Errorf("Elias Fano encoding failed")
 	}
 	for i, v := range values {

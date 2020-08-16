@@ -113,3 +113,22 @@ func TestBitQueueGet(t *testing.T) {
 	}
 
 }
+
+func TestBitQueueGetN(t *testing.T) {
+	b := MakeQueue()
+	b.PushBack(1)
+	b.PushBack(0)
+	b.PushBack(1)
+
+	b.Append([]uint64{uint64(0b10110100)}, 6)
+	if b.data[0] != uint64(0b00110100101) {
+		t.Errorf("BitQueue Set Failed.")
+	}
+	if b.GetN(0, 3) != uint64(0b101) {
+		t.Errorf("BitQueue Set Failed.")
+	}
+	if b.GetN(6, 4) != uint64(0b0110) {
+		t.Errorf("BitQueue Set Failed.")
+	}
+
+}
