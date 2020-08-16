@@ -1,4 +1,4 @@
-module zs-project.org/aeroview
+module github.com/zs-projects/aeroview
 
 go 1.14
 

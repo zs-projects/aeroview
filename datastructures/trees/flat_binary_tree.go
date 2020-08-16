@@ -1,9 +1,11 @@
-package datastructures
+package trees
 
 import (
 	"bytes"
 	"fmt"
 	"math"
+
+	"github.com/zs-projects/aeroview/datastructures/bits"
 )
 
 const (
@@ -28,7 +30,7 @@ type FBNode struct {
 // TODO: Add Rank and Select.
 type FBTree struct {
 	nodes     []FBValue
-	structure BitQueue
+	structure bits.Queue
 }
 
 func (f FBTree) String() string {
@@ -144,10 +146,10 @@ func MakeFBTreeFromLeafs(tls []TreeLeaf) FBTree {
 func preallocateFBTree(depth int) FBTree {
 	tr := FBTree{
 		nodes:     make([]FBValue, 0),
-		structure: BitQueue{},
+		structure: bits.Queue{},
 	}
 	tr.ensureCapacity(depth)
-	tr.structure.Append(make([]byte, int(math.Ceil(float64(len(tr.nodes))/8))), len(tr.nodes))
+	tr.structure.Append(make([]uint64, int(math.Ceil(float64(len(tr.nodes))/bits.BLOCKSIZE))), len(tr.nodes))
 	return tr
 }
 

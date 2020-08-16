@@ -11,9 +11,9 @@ func TestFixedSized_GetSet(t *testing.T) {
 
 	for nBit := 2; nBit < 16; nBit++ {
 		max := int(math.Pow(2, float64(nBit)))
-		f := &FixedSized{size:uint64(nBit), smalllist:make([]uint64, 100000)}
+		f := &FixedSized{size: uint64(nBit), smalllist: make([]uint64, 100000)}
 
-		for i := 0; i < max * 4; i++ {
+		for i := 0; i < max*4; i++ {
 			f.Set(uint64(i), i)
 		}
 		for i := 0; i < max; i++ {
@@ -31,7 +31,7 @@ func TestSelectFistKBits(t *testing.T) {
 }
 
 func TestSelectLastKBits(t *testing.T) {
-	for i := 0; i <= 63; i ++ {
+	for i := 0; i <= 63; i++ {
 		var expected uint64
 		exp := 63
 		for j := 0; j < i; j++ {

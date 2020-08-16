@@ -1,5 +1,7 @@
 package rank
 
+import "github.com/zs-projects/aeroview/datastructures/bits"
+
 const (
 	smallBlockSize  = 8
 	bigBlockSize    = 64
@@ -7,10 +9,10 @@ const (
 )
 
 type Rank0 struct {
-	bits       *BitVec
-	data       []uint64
-	blocks     []int
-	lookup     [256]uint8
+	bits   bits.Vector
+	data   []uint64
+	blocks []int
+	lookup [256]uint8
 }
 
 func (r *Rank0) Get(idx int) uint64 {
@@ -21,16 +23,15 @@ func (r *Rank0) Get(idx int) uint64 {
 	bigBlockIndex := idx / bigBlockSize
 	blockOffset := idx % bigBlockSize
 
-
 	// 1. get big block
 	if bigBlockIndex > 0 {
-		sum += r.blocks[bigBlockIndex - 1]
+		sum += r.blocks[bigBlockIndex-1]
 	}
 
 	// 2. get sum from lookup
-	sum += r.rank(idx - blockOffset, idx)
+	sum += r.rank(idx-blockOffset, idx)
 
-	return r.data[sum - 1]
+	return r.data[sum-1]
 }
 
 func (r *Rank0) rank(low, idx int) int {
@@ -49,11 +50,11 @@ func (r *Rank0) rank(low, idx int) int {
 }
 
 func NewRank0(xs []uint64) *Rank0 {
-	lookup := Make8BitLookup()
+	lookup := bits.Make8BitLookup()
 
 	nBigBlocks := len(xs) / 64
-	blocks := make([]int, nBigBlocks + 1)
-	bits := NewBitVec(nBigBlocks)
+	blocks := make([]int, nBigBlocks+1)
+	bits := bits.NewVector(nBigBlocks)
 
 	var data []uint64
 	var s int
@@ -62,16 +63,15 @@ func NewRank0(xs []uint64) *Rank0 {
 		if x != 0 {
 			data = append(data, x)
 			s++
-			blocks[i / bigBlockSize] = s
+			blocks[i/bigBlockSize] = s
 			bits.Set(i, 1)
 		}
 	}
 
 	return &Rank0{
-		bits:       bits,
-		data:       data,
-		blocks:     blocks,
-		lookup:     lookup,
+		bits:   *bits,
+		data:   data,
+		blocks: blocks,
+		lookup: lookup,
 	}
 }
-

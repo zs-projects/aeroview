@@ -2,12 +2,13 @@ package storage
 
 import (
 	"encoding/binary"
-	"zs-project.org/aeroview/rank"
+
+	"github.com/zs-projects/aeroview/datastructures/bits"
 )
 
 type RestartString struct {
 	data      []byte
-	bitVector *rank.BitVec
+	bitVector bits.Vector
 }
 
 func (r *RestartString) ToRawStrings() []string {
@@ -22,11 +23,11 @@ func (r *RestartString) ToRawStrings() []string {
 
 	for idx < len(r.data) {
 		l, n = binary.Uvarint(r.data[idx:])
-		startingPoint, n2 = binary.Uvarint(r.data[idx + n:])
+		startingPoint, n2 = binary.Uvarint(r.data[idx+n:])
 
-		curr := string(r.data[idx + n + n2:idx + n + n2 + int(l)])
-		rawStrings = append(rawStrings, prev[:startingPoint] + curr)
-		prev = rawStrings[len(rawStrings) - 1]
+		curr := string(r.data[idx+n+n2 : idx+n+n2+int(l)])
+		rawStrings = append(rawStrings, prev[:startingPoint]+curr)
+		prev = rawStrings[len(rawStrings)-1]
 		idx += n + n2 + int(l)
 	}
 
@@ -48,14 +49,14 @@ func FromSortedSlice(sortedStrings []string) *RestartString {
 	for i := 1; i < len(sortedStrings); i++ {
 
 		var smallerLen uint64
-		if len(sortedStrings[i - 1]) < len(sortedStrings[i]) {
-			smallerLen = uint64(len(sortedStrings[i - 1]))
+		if len(sortedStrings[i-1]) < len(sortedStrings[i]) {
+			smallerLen = uint64(len(sortedStrings[i-1]))
 		} else {
 			smallerLen = uint64(len(sortedStrings[i]))
 		}
 
 		var restartPoint uint64
-		for restartPoint < smallerLen && sortedStrings[i - 1][restartPoint] == sortedStrings[i][restartPoint] {
+		for restartPoint < smallerLen && sortedStrings[i-1][restartPoint] == sortedStrings[i][restartPoint] {
 			restartPoint++
 		}
 		encodedStrings[i] = sortedStrings[i][restartPoint:]
@@ -65,7 +66,7 @@ func FromSortedSlice(sortedStrings []string) *RestartString {
 
 	// 2. pack everything together.
 	idx := 0
-	bitVec := rank.NewBitVec(10)
+	bitVec := bits.NewVector(10)
 	data := make([]byte, 0)
 	for i := 0; i < len(sortedStrings); i++ {
 		buff := make([]byte, 8)
@@ -73,13 +74,13 @@ func FromSortedSlice(sortedStrings []string) *RestartString {
 		n2 := binary.PutUvarint(buff[n:], restartPoints[i])
 
 		bitVec.Set(idx, uint8(1))
-		d := append(buff[:n + n2], []byte(encodedStrings[i])...)
+		d := append(buff[:n+n2], []byte(encodedStrings[i])...)
 		data = append(data, d...)
 		idx += len(d)
 	}
 
 	return &RestartString{
 		data:      data,
-		bitVector: bitVec,
+		bitVector: *bitVec,
 	}
 }
