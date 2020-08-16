@@ -5,10 +5,10 @@ import (
 )
 
 type MockLevelOrderer struct {
-	nodes []NodeMetadata
+	nodes []BinaryNode
 }
 
-func (ml MockLevelOrderer) LevelOrder() []NodeMetadata {
+func (ml MockLevelOrderer) LevelOrder() []BinaryNode {
 	return ml.nodes
 }
 
@@ -30,7 +30,7 @@ func TestMakeCompactBinaryTreeStruct(t *testing.T) {
 			   2   x
 	*/
 	lvo := MockLevelOrderer{
-		nodes: []NodeMetadata{
+		nodes: []BinaryNode{
 			{true, true},   // 5
 			{true, false},  // 7
 			{true, true},   // 8

@@ -14,7 +14,7 @@ type CompactBinaryTreeStructure struct {
 }
 
 // MakeCompactBinaryTreeStructure make a bitset binary tree structure for a level order traversal of the tree.
-func MakeCompactBinaryTreeStructure(tr LevelOrderer) CompactBinaryTreeStructure {
+func MakeCompactBinaryTreeStructure(tr BinaryLevelOrderer) CompactBinaryTreeStructure {
 	q := bits.MakeQueue()
 	for _, node := range tr.LevelOrder() {
 		if node.HasLeftChild {

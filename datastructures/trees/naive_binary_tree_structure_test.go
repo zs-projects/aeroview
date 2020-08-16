@@ -18,7 +18,7 @@ func TestMakeNaiveBinaryTreeStruct(t *testing.T) {
 		   x   9   7   x 15  x
 	*/
 	lvo := MockLevelOrderer{
-		nodes: []NodeMetadata{
+		nodes: []BinaryNode{
 			{true, true},   // 5
 			{true, false},  // 7
 			{true, true},   // 8

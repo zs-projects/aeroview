@@ -11,8 +11,8 @@ type NaiveBinaryTreeStruct struct {
 	positions []uint8
 }
 
-// MakeBitsetBinaryTreeStructure make a bitset binary tree structure for a level order traversal of the tree.
-func MakeNaiveBinaryTreeStructure(tr LevelOrderer) NaiveBinaryTreeStruct {
+// MakeNaiveBinaryTreeStructure make a bitset binary tree structure for a level order traversal of the tree.
+func MakeNaiveBinaryTreeStructure(tr BinaryLevelOrderer) NaiveBinaryTreeStruct {
 	u := make([]uint8, int(math.Pow(2, float64(len(tr.LevelOrder())))))
 	for k, node := range tr.LevelOrder() {
 		position := int(math.Pow(2, float64(k))) - 1

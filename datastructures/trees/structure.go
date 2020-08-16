@@ -11,16 +11,22 @@ var (
 	ErrNoRightChildNode = errors.New("no right child for the provided node")
 )
 
-// NodeMetadata represents whether a node has a left and/or a right child
-type NodeMetadata struct {
+// BinaryNode represents whether a node has a left and/or a right child
+type BinaryNode struct {
 	HasLeftChild  bool
 	HasRightChild bool
 }
 
-// LevelOrderer traverses the underlying binary tree in level order a provides for each node
+// BinaryLevelOrderer traverses the underlying binary tree in level order a provides for each node
 // whether it has a left and/or right child.
-type LevelOrderer interface {
-	LevelOrder() []NodeMetadata
+type BinaryLevelOrderer interface {
+	LevelOrder() []BinaryNode
+}
+
+// KAryLevelOrderer traverses the underlying binary tree in level order a provides for each node
+// whether it has a left and/or right child.
+type KAryLevelOrderer interface {
+	LevelOrder() []int
 }
 
 // BinaryTreeStructure is a interface that provides basic operations for trees.
@@ -29,4 +35,8 @@ type BinaryTreeStructure interface {
 	HasRightChild(position int) bool
 	LeftChild(position int) (int, error)
 	RightChild(position int) (int, error)
+}
+
+type KAryTreeStructure interface {
+	Children(nodPos int) (nbChildren, startPosition int)
 }
