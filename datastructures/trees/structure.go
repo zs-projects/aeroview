@@ -29,7 +29,7 @@ type KAryLevelOrderer interface {
 	LevelOrder() []int
 }
 
-// BinaryTreeStructure is a interface that provides basic operations for trees.
+// BinaryTreeStructure is an interface that provides basic operations for binary trees.
 type BinaryTreeStructure interface {
 	HasLeftChild(position int) bool
 	HasRightChild(position int) bool
@@ -37,6 +37,7 @@ type BinaryTreeStructure interface {
 	RightChild(position int) (int, error)
 }
 
+//KAryTreeStructure is an interface that provides basic operations for k-ary trees.
 type KAryTreeStructure interface {
 	Children(nodPos int) (nbChildren, startPosition int)
 }
