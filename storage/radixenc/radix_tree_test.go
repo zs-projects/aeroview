@@ -47,7 +47,3 @@ func TestMakeRadixTree(t *testing.T) {
 		t.Errorf("Radix Tree not as expected %# v", diff)
 	}
 }
-
-func TestCompressSubTrie(t *testing.T) {
-
-}
