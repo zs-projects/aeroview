@@ -1,18 +1,18 @@
 package radixenc
 
 import (
+	"encoding/binary"
 	"strings"
 
 	"github.com/zs-projects/aeroview/datastructures/bits"
 	"github.com/zs-projects/aeroview/datastructures/trees"
-	"github.com/zs-projects/aeroview/encoding"
 )
 
 type FlatRadixTree struct {
 	data         []rune
-	offsetsStart encoding.EliasFanoVector
+	offsetsStart []uint64
 	structure    trees.KAryTreeStructure
-	leafs        bits.Queue
+	leafs        bits.Vector
 	maxChildren  int
 }
 
@@ -58,9 +58,9 @@ func MakeFlatRadixTree(r RadixTree) FlatRadixTree {
 
 	return FlatRadixTree{
 		data:         data,
-		offsetsStart: encoding.MakeEliasFanoVector(offsetsStart),
+		offsetsStart: offsetsStart,
 		structure:    trees.MakeCompactKAryTreeStructure(RadixLevelOrder(structure)),
-		leafs:        bitQueueLeafs,
+		leafs:        bitQueueLeafs.Vector(),
 		maxChildren:  maxChildren,
 	}
 }
@@ -71,7 +71,7 @@ func (f FlatRadixTree) Children(nodeIdx int) (nbChildren, startPos int) {
 }
 
 func (f FlatRadixTree) Size() int {
-	return (len(f.data) * 4) + f.leafs.Len()/8 + 4 + f.offsetsStart.Len()/8 + (f.leafs.Len() * f.maxChildren / 8)
+	return (len(f.data) * 4) + len(f.leafs)/8 + 4 + len(f.offsetsStart)/8 + (len(f.leafs) * f.maxChildren / 8)
 }
 
 func (f FlatRadixTree) Overhead() float64 {
@@ -90,8 +90,8 @@ func (f FlatRadixTree) Encode(data []string) [][]int {
 			if nbChildren, startPos := f.Children(node); nbChildren > 0 {
 				for i := 0; i < nbChildren; i++ {
 					childIdx := i + startPos
-					start := f.offsetsStart.Get(childIdx)
-					stop := f.offsetsStart.Get(childIdx + 1)
+					start := f.offsetsStart[childIdx]
+					stop := f.offsetsStart[childIdx+1]
 					prefix := string(f.data[start:stop])
 					if strings.HasPrefix(s[cur:], prefix) {
 						encoding = append(encoding, childIdx)
@@ -112,11 +112,20 @@ func (f FlatRadixTree) Encode(data []string) [][]int {
 func (f FlatRadixTree) Decode(encodedData [][]int) []string {
 	out := make([]string, 0, len(encodedData))
 	for _, encodedStr := range encodedData {
-		str := make([]rune, 0)
+		str := make([]rune, 0, 2048)
 		for _, token := range encodedStr {
-			str = append(str, f.data[f.offsetsStart.Get(token):f.offsetsStart.Get(token+1)]...)
+			str = append(str, f.data[f.offsetsStart[token]:f.offsetsStart[token+1]]...)
 		}
 		out = append(out, string(str))
+	}
+	return out
+}
+
+func (f FlatRadixTree) DecodeFast(encodedData []byte) []rune {
+	out := make([]rune, 0, len(encodedData)*3)
+	for i := 0; i < len(encodedData); i += 4 {
+		token := binary.LittleEndian.Uint32(encodedData[i : i+4])
+		out = append(out, f.data[f.offsetsStart[token]:f.offsetsStart[token+1]]...)
 	}
 	return out
 }
