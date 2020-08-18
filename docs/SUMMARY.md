@@ -4,6 +4,6 @@
 
 ## Arrays
 
-* [Untitled](arrays/untitled-1.md)
-* [Untitled](arrays/untitled.md)
+* [Compressing arrays on integers](arrays/untitled-1.md)
+* [Arrays of bits.](arrays/untitled.md)
 

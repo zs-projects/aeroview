@@ -1,2 +1,2 @@
-# Untitled
+# Compressing arrays on integers
 
