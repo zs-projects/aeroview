@@ -12,7 +12,7 @@ import (
 type EliasFanoVector struct {
 	highBits      bits.Queue
 	lowBits       bits.Queue
-	rank          rank.PopCount
+	rank          *rank.PopCount
 	nElements     int // the number of elements in the data structure.
 	lowBitsCount  int // The number of bits used to encode the low bits.
 	highBitsCount int // The number of bits used to encode the low bits.

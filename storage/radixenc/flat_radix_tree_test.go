@@ -42,8 +42,8 @@ func TestMakeFlatRadixTree(t *testing.T) {
 }
 
 func BenchmarkFlatRadixTreeDecode(b *testing.B) {
-	r, err := ioutil.ReadFile("/home/ryad/listOfFiles.list")
-	//r, err := ioutil.ReadFile("/home/ryad/sample.txt")
+	//r, err := ioutil.ReadFile("/home/ryad/listOfFiles.list")
+	r, err := ioutil.ReadFile("/home/ryad/sample.txt2")
 	if err != nil {
 		panic("file not found")
 	}
@@ -75,8 +75,8 @@ func BenchmarkFlatRadixTreeDecode(b *testing.B) {
 }
 
 func BenchmarkLZ4Decode(b *testing.B) {
-	r, err := ioutil.ReadFile("/home/ryad/listOfFiles.list")
-	//r, err := ioutil.ReadFile("/home/ryad/sample.txt")
+	//r, err := ioutil.ReadFile("/home/ryad/listOfFiles.list")
+	r, err := ioutil.ReadFile("/home/ryad/sample.txt2")
 	if err != nil {
 		panic("file not found")
 	}

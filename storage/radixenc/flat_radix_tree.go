@@ -122,7 +122,7 @@ func (f FlatRadixTree) Decode(encodedData [][]int) []string {
 }
 
 func (f FlatRadixTree) DecodeFast(encodedData []byte) []rune {
-	out := make([]rune, 0, len(encodedData)*3)
+	out := make([]rune, 0, len(encodedData))
 	for i := 0; i < len(encodedData); i += 4 {
 		token := binary.LittleEndian.Uint32(encodedData[i : i+4])
 		out = append(out, f.data[f.offsetsStart[token]:f.offsetsStart[token+1]]...)

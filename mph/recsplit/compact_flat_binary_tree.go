@@ -6,58 +6,49 @@ import (
 )
 
 type CompactFBTree struct {
-	nodes     []FBValue
-	structure rank.PopCount
+	nodesR      []int
+	nodesNBKeys []int
+	structure   *rank.PopCount
 }
 
 func FromFBTree(u FBTree) CompactFBTree {
 	q := bits.MakeQueue()
-	nodes := compressStructure(&q, &u)
+	nodesR, nodesNBKeys := compressStructure(&q, &u)
 	b := q.Vector()
 	pc := rank.MakePopCount(b)
 	return CompactFBTree{
-		nodes:     nodes,
-		structure: pc,
+		nodesNBKeys: nodesNBKeys,
+		nodesR:      nodesR,
+		structure:   pc,
 	}
 }
-func (c CompactFBTree) Root() *FBNode {
-	return c.node(0)
+func (c CompactFBTree) Root() int {
+	return 0
 }
 
-func (c CompactFBTree) LeftChild(u *FBNode) *FBNode {
-	if c.nodeHasLeftChild(*u) {
-		nodePosition := c.structure.Rank(2 * u.offset)
-		return c.node(nodePosition)
-	}
-	return nil
+func (c CompactFBTree) LeftChild(offset int) int {
+	return int(c.structure.Get(2*offset)) * c.structure.Rank(2*offset)
 }
 
-func (c CompactFBTree) RightChild(u *FBNode) *FBNode {
-	if c.nodeHasRightChild(*u) {
-		nodePosition := c.structure.Rank(2*u.offset + 1)
-		return c.node(nodePosition)
-	}
-	return nil
+func (c CompactFBTree) RightChild(offset int) int {
+	return int(c.structure.Get(2*offset+1)) * c.structure.Rank(2*offset+1)
 }
 
-func (c CompactFBTree) nodeHasLeftChild(node FBNode) bool {
-	offset := node.offset
-	position := 2 * offset
-	exists := c.structure.Get(position)
-	return exists == 1
+func (c CompactFBTree) nodeHasLeftChild(offset int) bool {
+	return c.structure.Get(2*offset) == 1
 }
 
-func (c CompactFBTree) nodeHasRightChild(node FBNode) bool {
-	offset := node.offset
-	position := 2*offset + 1
-	return c.structure.Get(position) == 1
+func (c CompactFBTree) nodeHasRightChild(offset int) bool {
+	return c.structure.Get(2*offset+1) == 1
 }
 
-func compressStructure(q *bits.Queue, u *FBTree) []FBValue {
+func compressStructure(q *bits.Queue, u *FBTree) ([]int, []int) {
 	nodesQueue := make([]*FBNode, 0)
 	nodesQueue = append(nodesQueue, u.Root())
-	nodes := make([]FBValue, 0)
-	nodes = append(nodes, u.nodes[0])
+	nodesR := make([]int, 0)
+	nodesNBKeys := make([]int, 0)
+	nodesR = append(nodesR, u.nodes[0].R)
+	nodesNBKeys = append(nodesNBKeys, u.nodes[0].NbKeys)
 	i := 0
 	for len(nodesQueue) > i {
 		node := nodesQueue[i]
@@ -66,7 +57,8 @@ func compressStructure(q *bits.Queue, u *FBTree) []FBValue {
 			q.PushBack(1)
 			left := u.LeftChild(*node)
 			nodesQueue = append(nodesQueue, left)
-			nodes = append(nodes, u.nodes[left.offset])
+			nodesNBKeys = append(nodesNBKeys, u.nodes[left.offset].NbKeys)
+			nodesR = append(nodesR, u.nodes[left.offset].R)
 		} else {
 			q.PushBack(0)
 		}
@@ -74,21 +66,19 @@ func compressStructure(q *bits.Queue, u *FBTree) []FBValue {
 			q.PushBack(1)
 			right := u.RightChild(*node)
 			nodesQueue = append(nodesQueue, right)
-			nodes = append(nodes, u.nodes[right.offset])
+			nodesR = append(nodesR, u.nodes[right.offset].R)
+			nodesNBKeys = append(nodesNBKeys, u.nodes[right.offset].NbKeys)
 		} else {
 			q.PushBack(0)
 		}
 	}
-	return nodes
+	return nodesR, nodesNBKeys
 }
 
-func (f CompactFBTree) node(offset int) *FBNode {
-	return &FBNode{
-		offset: offset,
-		Value:  f.nodes[offset],
-	}
+func (f CompactFBTree) node(offset int) (R int, nbKeys int) {
+	return f.nodesR[offset], f.nodesNBKeys[offset]
 }
 
-func (f CompactFBTree) IsLeaf(node FBNode) bool {
-	return !f.nodeHasLeftChild(node) && !f.nodeHasRightChild(node)
+func (f CompactFBTree) IsLeaf(offset int) bool {
+	return !(f.structure.Get(2*offset) == 1 || f.structure.Get(2*offset+1) == 1)
 }

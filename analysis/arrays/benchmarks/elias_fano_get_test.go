@@ -1,59 +1,54 @@
 package benchmarks
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/zs-projects/aeroview/analysis/randutils"
 	"github.com/zs-projects/aeroview/encoding"
 )
 
-func BenchmarkEliasFanoGet100K(b *testing.B) {
-	slc := randutils.RandSlice64(100000)
+var dummy uint64
+
+func benchEliasFanoGet(b *testing.B, sliceSize, indexSize int) {
+	slc, indexes := randutils.PrepareSliceAndIndexes(sliceSize, indexSize)
 	elias := encoding.MakeEliasFanoVector(slc)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(100000)
-	}
 	b.ResetTimer()
-	for _, idx := range indexes {
-		elias.Get(idx)
+	for i := 0; i < b.N; i++ {
+		for _, idx := range indexes {
+			dummy = elias.Get(idx)
+		}
 	}
+	b.ReportMetric(float64(indexSize), "Get/op")
+}
+
+func benchSliceGet(b *testing.B, sliceSize, indexSize int) {
+	slc, indexes := randutils.PrepareSliceAndIndexes(sliceSize, indexSize)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, idx := range indexes {
+			dummy = slc[idx]
+		}
+	}
+	b.ReportMetric(float64(indexSize), "Get/op")
+}
+func BenchmarkEliasFanoGet100K(b *testing.B) {
+	sliceSize := 100000
+	indexSize := 1000
+	benchEliasFanoGet(b, sliceSize, indexSize)
+}
+func BenchmarkEliasFanoGet10K(b *testing.B) {
+	sliceSize := 10000
+	indexSize := 1000
+	benchEliasFanoGet(b, sliceSize, indexSize)
 }
 
 func BenchmarkSliceGet100K(b *testing.B) {
-	slc := randutils.RandSlice64(100000)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(100000)
-	}
-	b.ResetTimer()
-	for _, idx := range indexes {
-		_ = slc[idx]
-	}
+	sliceSize := 100000
+	indexSize := 1000
+	benchSliceGet(b, sliceSize, indexSize)
 }
-
-func BenchmarkEliasFanoGet10K(b *testing.B) {
-	slc := randutils.RandSlice64(10000)
-	elias := encoding.MakeEliasFanoVector(slc)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(10000)
-	}
-	b.ResetTimer()
-	for _, idx := range indexes {
-		elias.Get(idx)
-	}
-}
-
 func BenchmarkSliceGet10K(b *testing.B) {
-	slc := randutils.RandSlice64(10000)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(10000)
-	}
-	b.ResetTimer()
-	for _, idx := range indexes {
-		_ = slc[idx]
-	}
+	sliceSize := 10000
+	indexSize := 1000
+	benchSliceGet(b, sliceSize, indexSize)
 }

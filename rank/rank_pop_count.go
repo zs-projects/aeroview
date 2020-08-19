@@ -20,7 +20,7 @@ type PopCount struct {
 }
 
 // MakePopCount creates a RankPopCount instance.
-func MakePopCount(b bits.Vector) PopCount {
+func MakePopCount(b bits.Vector) *PopCount {
 	// Blocksize is 64 bits for mecanichal sympathy.
 	rm := makeRankMetadata(BLOCKSIZE, len(b)*64)
 
@@ -43,11 +43,11 @@ func MakePopCount(b bits.Vector) PopCount {
 		}
 		diff = 0
 	}
-	return rk
+	return &rk
 }
 
 // Rank ruturns the number of 1 bits in the bitvector for the first idx bits.
-func (r PopCount) Rank(idx int) int {
+func (r *PopCount) Rank(idx int) int {
 	spblocIdx := idx / r.metadata.SuperBlockSize
 	blockIdx := idx / BLOCKSIZE
 	rankSuperBlock := r.SuperBlockRanks[spblocIdx]
@@ -59,7 +59,7 @@ func (r PopCount) Rank(idx int) int {
 }
 
 // Select return the idx of the i'th one in the underlying bit vector.
-func (r PopCount) Select(idx uint64) uint64 {
+func (r *PopCount) Select(idx uint64) uint64 {
 	spBlock := r.identifySuperBlock(idx)
 	spBlockRank := r.SuperBlockRanks[spBlock]
 	if spBlockRank >= idx && spBlock > 0 {
@@ -129,6 +129,6 @@ func (r PopCount) identifyBlock(i, supBlockValue uint64, lowerBlockIdx, upperBlo
 	return pos
 }
 
-func (r PopCount) Get(idx int) int {
+func (r *PopCount) Get(idx int) uint64 {
 	return r.Data.Get(idx)
 }

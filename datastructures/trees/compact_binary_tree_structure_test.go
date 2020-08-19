@@ -50,7 +50,7 @@ func TestMakeCompactBinaryTreeStruct(t *testing.T) {
 	// Checking for structure
 	for i := 0; i < 24; i++ {
 		bit := bbts.Get(i)
-		expected := int((expectedStructure >> i) & 0b1)
+		expected := (expectedStructure >> i) & 0b1
 		if bit != expected {
 			t.Errorf("Structure check failed at index %v, expected %v, got %v", i, expected, bit)
 		}

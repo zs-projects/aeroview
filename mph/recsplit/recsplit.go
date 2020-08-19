@@ -30,19 +30,20 @@ func (r Recsplit) GetKey(s string) int {
 	tree := r.keys[bucket]
 	node := tree.Root()
 	h := r.cumSums[bucket]
-	for {
-		if tree.IsLeaf(*node) {
-			return h + hash(s, uint64(node.Value.R))%node.Value.NbKeys
-		}
-		split := hash(s, uint64(node.Value.R)) % node.Value.NbKeys
-		if split < node.Value.NbKeys/2 {
+	out := -1
+	for node != 0 || (node == 0 && out == -1) {
+		R, nbKeys := tree.node(node)
+		split := hash(s, uint64(R)) % nbKeys
+		halfNbKeys := int(nbKeys / 2)
+		out = h + split
+		if split < halfNbKeys {
 			node = tree.LeftChild(node)
 		} else {
-			h = h + int(node.Value.NbKeys)/2
 			node = tree.RightChild(node)
+			h += halfNbKeys
 		}
-
 	}
+	return out
 }
 
 // Get Returns the looked for value
@@ -154,7 +155,8 @@ func mphFromRecsplitLeafs(res map[int][]recsplitLeaf, nbBuckets int, values map[
 		mph.keys[bucket] = FromFBTree(MakeFBTreeFromLeafs(tleafs))
 	}
 	for _, value := range mph.keys {
-		cumSum += value.Root().Value.NbKeys
+		_, nbKeys := value.node(value.Root())
+		cumSum += nbKeys
 		mph.cumSums = append(mph.cumSums, cumSum)
 	}
 	for key, value := range values {
@@ -282,10 +284,10 @@ func checkForCollisions(r uint64, keys []string, collisions []bool) bool {
 	return false
 }
 
+var mask uint64 = (1<<64 - 1<<63) - 1
+
 func hash(data string, r uint64) int {
 	hash := murmur3.SeedStringSum64(r, data)
-	if int(hash) <= 0 {
-		return -int(hash)
-	}
-	return int(hash)
+	// put the highest bit to 0, to make sure that we have a positive number when converting.ut the highest bit to 0, to make sure that we have a positive number when converting.
+	return int(hash & mask)
 }
