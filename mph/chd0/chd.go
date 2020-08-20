@@ -19,6 +19,10 @@ type CHD struct {
 	h      []int32
 }
 
+func (chd *CHD) SizeInBytes() int {
+	return len(chd.keys)*8 + len(chd.h)*4
+}
+
 func (chd *CHD) Get(key string) ([]byte, bool) {
 	// 1. get the bucket
 	hIndex := int(hash(key, rNot)) % len(chd.h)

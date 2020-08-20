@@ -23,6 +23,14 @@ type Recsplit struct {
 	cumSums []int
 }
 
+func (r Recsplit) SizeInBytes() int {
+	u := 0
+	for _, fbt := range r.keys {
+		u += fbt.SizeInBytes()
+	}
+	return len(r.cumSums)*8 + u
+}
+
 // GetKey Returns the looked for value
 func (r Recsplit) GetKey(s string) int {
 	// 1. Determine bucket.

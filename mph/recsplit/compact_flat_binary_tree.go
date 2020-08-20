@@ -11,6 +11,10 @@ type CompactFBTree struct {
 	structure   *rank.PopCount
 }
 
+func (c CompactFBTree) SizeInBytes() int {
+	return len(c.nodesR)*8 + len(c.nodesNBKeys)*8 + c.structure.SizeInBytes()
+}
+
 func FromFBTree(u FBTree) CompactFBTree {
 	q := bits.MakeQueue()
 	nodesR, nodesNBKeys := compressStructure(&q, &u)

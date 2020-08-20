@@ -5,7 +5,7 @@ import (
 	"math/rand"
 )
 
-func makeDataset(size int, prefix string, subSetSize int) (map[string][]byte, []string) {
+func MakeDataset(size int, prefix string, subSetSize int) (map[string][]byte, []string) {
 	out := make(map[string][]byte, size)
 	keysSample := make([]string, 0, subSetSize)
 	for i := 0; i < size; i++ {

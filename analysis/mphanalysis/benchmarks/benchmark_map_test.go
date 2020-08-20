@@ -10,7 +10,7 @@ import (
 var dummy []byte
 
 func BenchmarkMapGet100K(b *testing.B) {
-	ds, keys := makeDataset(100000, "string", 1000)
+	ds, keys := MakeDataset(100000, "string", 1000)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for _, key := range keys {
@@ -21,7 +21,7 @@ func BenchmarkMapGet100K(b *testing.B) {
 }
 
 func BenchmarkRecsplitGet100K(b *testing.B) {
-	ds, keys := makeDataset(100000, "string", 1000)
+	ds, keys := MakeDataset(100000, "string", 1000)
 
 	mph := recsplit.FromMap(ds, 20)
 	b.ResetTimer()
@@ -34,7 +34,7 @@ func BenchmarkRecsplitGet100K(b *testing.B) {
 }
 
 func BenchmarkRecsplitSimpleGet100K(b *testing.B) {
-	ds, keys := makeDataset(100000, "string", 1000)
+	ds, keys := MakeDataset(100000, "string", 1000)
 
 	mph := recsplit.Recsplit(recsplit.FromMap(ds, 20))
 	b.ResetTimer()
@@ -46,7 +46,7 @@ func BenchmarkRecsplitSimpleGet100K(b *testing.B) {
 	b.ReportMetric(float64(1000), "Get/op")
 }
 func BenchmarkCHDGet100K(b *testing.B) {
-	ds, keys := makeDataset(100000, "string", 1000)
+	ds, keys := MakeDataset(100000, "string", 1000)
 
 	mph, err := chd0.FromMap(ds)
 	if err != nil {

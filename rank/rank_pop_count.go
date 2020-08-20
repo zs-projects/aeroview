@@ -19,6 +19,10 @@ type PopCount struct {
 	Data            bits.Vector
 }
 
+func (r *PopCount) SizeInBytes() int {
+	return len(r.SuperBlockRanks)*8 + len(r.Blocks)*2 + len(r.Data)*8 + 6*8
+}
+
 // MakePopCount creates a RankPopCount instance.
 func MakePopCount(b bits.Vector) *PopCount {
 	// Blocksize is 64 bits for mecanichal sympathy.
