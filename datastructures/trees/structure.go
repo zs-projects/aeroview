@@ -17,24 +17,21 @@ type BinaryNode struct {
 	HasRightChild bool
 }
 
-// BinaryLevelOrderer traverses the underlying binary tree in level order a provides for each node
-// whether it has a left and/or right child.
-type BinaryLevelOrderer interface {
-	LevelOrder() []BinaryNode
-}
+// BinaryLevelOrder provides a traversal of the underlying binary tree in level order and
+// tells for each node whether it has a left and/or right child.
+type BinaryLevelOrder []BinaryNode
 
-// KAryLevelOrderer traverses the underlying binary tree in level order a provides for each node
-// whether it has a left and/or right child.
-type KAryLevelOrderer interface {
-	LevelOrder() []int
-}
+// NodeNBChildren is the number of children o a node in a KAry Tree
+type NodeNBChildren = int
+
+// KAryLevelOrder traverses the underlying k-ary tree in level order a provides for each node
+// how many children he has.
+type KAryLevelOrder []NodeNBChildren
 
 // BinaryTreeStructure is an interface that provides basic operations for binary trees.
 type BinaryTreeStructure interface {
-	HasLeftChild(position int) bool
-	HasRightChild(position int) bool
-	LeftChild(position int) (int, error)
-	RightChild(position int) (int, error)
+	LeftChild(position int) (childPosition int, exists bool)
+	RightChild(position int) (childPosition int, exists bool)
 }
 
 //KAryTreeStructure is an interface that provides basic operations for k-ary trees.

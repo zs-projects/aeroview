@@ -9,22 +9,22 @@ import (
 // in a bitset.
 type CompactKAryTreeStructure struct {
 	// The maximum number of children for a node in the tree.
-	K int
+	K NodeNBChildren
 	rank.GetRanker
 }
 
 // MakeCompactKAryTreeStructure make a bitset k-ary tree structure for a level order traversal of the tree.
-func MakeCompactKAryTreeStructure(tr KAryLevelOrderer) CompactKAryTreeStructure {
-	maxChildren := 0
-	for _, v := range tr.LevelOrder() {
+func MakeCompactKAryTreeStructure(tr KAryLevelOrder) CompactKAryTreeStructure {
+	maxChildren := NodeNBChildren(0)
+	for _, v := range tr {
 		if maxChildren <= v {
 			maxChildren = v
 		}
 	}
 
 	q := bits.MakeQueue()
-	for _, nbChildren := range tr.LevelOrder() {
-		for i := 0; i < nbChildren; i++ {
+	for _, nbChildren := range tr {
+		for i := 0; i < int(nbChildren); i++ {
 			q.PushBack(1)
 		}
 		if nbChildren < maxChildren {

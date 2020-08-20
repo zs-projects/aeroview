@@ -16,12 +16,6 @@ type FlatRadixTree struct {
 	maxChildren  int
 }
 
-type RadixLevelOrder []int
-
-func (u RadixLevelOrder) LevelOrder() []int {
-	return []int(u)
-}
-
 func MakeFlatRadixTree(r RadixTree) FlatRadixTree {
 	queueCh := make([]*RadixTree, 0)
 	queuePr := make([]string, 0)
@@ -59,7 +53,7 @@ func MakeFlatRadixTree(r RadixTree) FlatRadixTree {
 	return FlatRadixTree{
 		data:         data,
 		offsetsStart: offsetsStart,
-		structure:    trees.MakeCompactKAryTreeStructure(RadixLevelOrder(structure)),
+		structure:    trees.MakeCompactKAryTreeStructure(structure),
 		leafs:        bitQueueLeafs.Vector(),
 		maxChildren:  maxChildren,
 	}

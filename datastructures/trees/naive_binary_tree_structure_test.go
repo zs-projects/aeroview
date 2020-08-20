@@ -17,18 +17,16 @@ func TestMakeNaiveBinaryTreeStruct(t *testing.T) {
 			/ \     / \   / \
 		   x   9   7   x 15  x
 	*/
-	lvo := MockLevelOrderer{
-		nodes: []BinaryNode{
-			{true, true},   // 5
-			{true, false},  // 7
-			{true, true},   // 8
-			{false, true},  // 3
-			{true, false},  // 6
-			{true, false},  // 11
-			{false, true},  // 9
-			{false, false}, // 7
-			{false, true},  // 15
-		},
+	lvo := []BinaryNode{
+		{true, true},   // 5
+		{true, false},  // 7
+		{true, true},   // 8
+		{false, true},  // 3
+		{true, false},  // 6
+		{true, false},  // 11
+		{false, true},  // 9
+		{false, false}, // 7
+		{false, true},  // 15
 	}
 	bbts := MakeNaiveBinaryTreeStructure(lvo)
 	// Let's naviguate through the tree.
@@ -43,7 +41,7 @@ func TestMakeNaiveBinaryTreeStruct(t *testing.T) {
 		7: false, // 7
 		8: false, // 15
 	}
-	for i := 0; i < len(lvo.LevelOrder()); i++ {
+	for i := 0; i < len(lvo); i++ {
 		if bbts.HasLeftChild(i) != testTableHasLeft[i] {
 			t.Errorf("Has left check failed at index %v, expected %v, got %v", i, testTableHasLeft[i], bbts.HasLeftChild(i))
 		}
@@ -60,7 +58,7 @@ func TestMakeNaiveBinaryTreeStruct(t *testing.T) {
 		7: false, // 7
 		8: true,  // 15
 	}
-	for i := 0; i < len(lvo.LevelOrder()); i++ {
+	for i := 0; i < len(lvo); i++ {
 		if bbts.HasRightChild(i) != testTableHasRight[i] {
 			t.Errorf("Has right check failed at index %v, expected %v, got %v", i, testTableHasLeft[i], bbts.HasLeftChild(i))
 		}

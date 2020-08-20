@@ -29,21 +29,19 @@ func TestMakeCompactBinaryTreeStruct(t *testing.T) {
 			    / \
 			   2   x
 	*/
-	lvo := MockLevelOrderer{
-		nodes: []BinaryNode{
-			{true, true},   // 5
-			{true, false},  // 7
-			{true, true},   // 8
-			{false, true},  // 3
-			{true, false},  // 6
-			{true, false},  // 11
-			{false, true},  // 9
-			{false, false}, // 7
-			{false, true},  // 15
-			{true, false},  // 4
-			{false, false}, // 17
-			{false, false}, // 2
-		},
+	lvo := []BinaryNode{
+		{true, true},   // 5
+		{true, false},  // 7
+		{true, true},   // 8
+		{false, true},  // 3
+		{true, false},  // 6
+		{true, false},  // 11
+		{false, true},  // 9
+		{false, false}, // 7
+		{false, true},  // 15
+		{true, false},  // 4
+		{false, false}, // 17
+		{false, false}, // 2
 	}
 	expectedStructure := uint64(0b01100010010110110111)
 	bbts := MakeCompactBinaryTreeStructure(lvo)
@@ -70,9 +68,9 @@ func TestMakeCompactBinaryTreeStruct(t *testing.T) {
 		10: false, // 17
 		11: false, // 2
 	}
-	for i := 0; i < len(lvo.LevelOrder()); i++ {
-		if bbts.HasLeftChild(i) != testTableHasLeft[i] {
-			t.Errorf("Has left check failed at index %v, expected %v, got %v", i, testTableHasLeft[i], bbts.HasLeftChild(i))
+	for i := 0; i < len(lvo); i++ {
+		if _, exists := bbts.LeftChild(i); exists != testTableHasLeft[i] {
+			t.Errorf("Has left check failed at index %v, expected %v, got %v", i, testTableHasLeft[i], exists)
 		}
 	}
 	// Let's naviguate through the tree.
@@ -90,9 +88,9 @@ func TestMakeCompactBinaryTreeStruct(t *testing.T) {
 		10: false, // 17
 		11: false, // 2
 	}
-	for i := 0; i < len(lvo.LevelOrder()); i++ {
-		if bbts.HasRightChild(i) != testTableHasRight[i] {
-			t.Errorf("Has right check failed at index %v, expected %v, got %v", i, testTableHasLeft[i], bbts.HasLeftChild(i))
+	for i := 0; i < len(lvo); i++ {
+		if _, exists := bbts.RightChild(i); exists != testTableHasRight[i] {
+			t.Errorf("Has right check failed at index %v, expected %v, got %v", i, testTableHasLeft[i], exists)
 		}
 	}
 	// Let's naviguate through the tree.
@@ -105,7 +103,7 @@ func TestMakeCompactBinaryTreeStruct(t *testing.T) {
 		9: 11, // 4
 	}
 	for i, expected := range testTableLeft {
-		if off, ok := bbts.LeftChild(i); ok != nil || (off != expected) {
+		if off, exists := bbts.LeftChild(i); !exists || (off != expected) {
 			t.Errorf("Right child method failed at index %v, expected %v, got %v", i, expected, off)
 		}
 	}
@@ -118,7 +116,7 @@ func TestMakeCompactBinaryTreeStruct(t *testing.T) {
 		8: 10, // 15
 	}
 	for i, expected := range testTableRight {
-		if off, ok := bbts.RightChild(i); ok != nil || (off != expected) {
+		if off, exists := bbts.RightChild(i); !exists || (off != expected) {
 			t.Errorf("Right child method failed at index %v, expected %v, got %v", i, expected, off)
 		}
 	}
