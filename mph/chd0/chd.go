@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sort"
 
-	"github.com/zs-projects/aeroview/mph/farmhash"
+	"github.com/twmb/murmur3"
 	"github.com/zs-projects/aeroview/mph/utils"
 )
 
@@ -128,6 +128,10 @@ func FromMap(kv map[string][]byte) (*CHD, error) {
 	}, nil
 }
 
+var mask uint64 = (1<<64 - 1<<63) - 1
+
 func hash(data string, r uint32) int {
-	return int(farmhash.Hash32(data) ^ r)
+	hash := murmur3.SeedStringSum64(uint64(r), data)
+	// put the highest bit to 0, to make sure that we have a positive number when converting.ut the highest bit to 0, to make sure that we have a positive number when converting.
+	return int(hash & mask)
 }
