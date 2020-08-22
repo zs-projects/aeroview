@@ -10,7 +10,7 @@ import (
 
 type FlatRadixTree struct {
 	data         []byte
-	offsetsStart []uint64
+	offsetsStart []uint32
 	structure    trees.KAryTreeStructure
 	leafs        bits.Vector
 	maxChildren  int
@@ -24,7 +24,7 @@ func MakeFlatRadixTree(r RadixTree) FlatRadixTree {
 	cur := 0
 
 	data := make([]byte, 0)
-	offsetsStart := make([]uint64, 1) // We want the offsets to start with 0 for regularity.
+	offsetsStart := make([]uint32, 1) // We want the offsets to start with 0 for regularity.
 	structure := make([]int, 0)
 	bitQueueLeafs := bits.MakeQueue()
 	maxChildren := 0
@@ -33,7 +33,7 @@ func MakeFlatRadixTree(r RadixTree) FlatRadixTree {
 		curData := queuePr[cur]
 		data = append(data, curData...)
 		curOffset := len(data)
-		offsetsStart = append(offsetsStart, uint64(curOffset))
+		offsetsStart = append(offsetsStart, uint32(curOffset))
 		structure = append(structure, len(curNode.children))
 		if curNode.isLeaf {
 			bitQueueLeafs.PushBack(1)
@@ -115,9 +115,9 @@ func (f FlatRadixTree) Decode(encodedData [][]int) []string {
 	return out
 }
 
-func (f FlatRadixTree) DecodeFast(encodedData []byte) []byte {
-	out := make([]byte, len(encodedData)*3)
-	cur := uint64(0)
+func (f FlatRadixTree) DecodeFast(origSize int, encodedData []byte) []byte {
+	out := make([]byte, origSize)
+	cur := uint32(0)
 	for i := 0; i < len(encodedData); i += 4 {
 		token := binary.LittleEndian.Uint32(encodedData[i : i+4])
 		start := f.offsetsStart[token]

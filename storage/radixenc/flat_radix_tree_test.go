@@ -41,6 +41,8 @@ func TestMakeFlatRadixTree(t *testing.T) {
 	fmt.Printf("Flat Radix Tree: Original Size %v\t Encoded Size %v\n", originalSize*4, len(compressed))
 }
 
+var out []byte
+
 func BenchmarkFlatRadixTreeDecode(b *testing.B) {
 	//r, err := ioutil.ReadFile("/home/ryad/listOfFiles.list")
 	r, err := ioutil.ReadFile("/home/ryad/sample.txt2")
@@ -66,7 +68,7 @@ func BenchmarkFlatRadixTreeDecode(b *testing.B) {
 	encData := buffer.Bytes()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = (frdt.DecodeFast(encData))
+		out = (frdt.DecodeFast(len(r), encData))
 	}
 }
 
@@ -84,6 +86,7 @@ func BenchmarkLZ4Decode(b *testing.B) {
 	if err != nil {
 		panic(err)
 	}
+	wBuf.Flush()
 	data := buf.Bytes()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
