@@ -111,26 +111,12 @@ func (r PopCount) identifySuperBlock(i uint64) int {
 
 func (r PopCount) identifyBlock(i, supBlockValue uint64, lowerBlockIdx, upperBlockIdx int) int {
 	diff := i - supBlockValue
-	blocks := r.Blocks[lowerBlockIdx:upperBlockIdx]
-	hi := upperBlockIdx - lowerBlockIdx
-	lo := 0
-	pos := (hi - lo) / 2
-	for hi > lo {
-		if v := uint64(blocks[pos]); v < diff {
-			lo = pos + 1
-			pos = (hi-lo)/2 + lo
-		} else if v > diff {
-			hi = pos - 1
-			pos = (hi-lo)/2 + lo
-		} else {
-			for i := pos - 1; i >= 0; i-- {
-				if blocks[pos] != blocks[i] {
-					return i + 1
-				}
-			}
+	for idx := lowerBlockIdx; idx <= upperBlockIdx; idx++ {
+		if v := uint64(r.Blocks[idx]); v >= diff {
+			return idx - lowerBlockIdx
 		}
 	}
-	return pos
+	return upperBlockIdx - lowerBlockIdx
 }
 
 func (r *PopCount) Get(idx int) uint64 {
