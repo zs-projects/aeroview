@@ -66,16 +66,13 @@ func BenchmarkFlatRadixTreeDecode(b *testing.B) {
 	encData := buffer.Bytes()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if err != nil {
-			panic(err)
-		}
 		_ = (frdt.DecodeFast(encData))
 	}
-
 }
 
 func BenchmarkLZ4Decode(b *testing.B) {
 	//r, err := ioutil.ReadFile("/home/ryad/listOfFiles.list")
+
 	r, err := ioutil.ReadFile("/home/ryad/sample.txt2")
 	if err != nil {
 		panic("file not found")
@@ -97,5 +94,4 @@ func BenchmarkLZ4Decode(b *testing.B) {
 			panic(fmt.Sprintf("Error, %v, %v, %v", err, len(u), len(r)))
 		}
 	}
-
 }
