@@ -8,7 +8,7 @@ import (
 )
 
 func TestFromMap(t *testing.T) {
-	nbKeys := 50000000
+	nbKeys := 50000
 	mp := make(map[string][]byte, nbKeys)
 	for i := 0; i < nbKeys; i++ {
 		data := fmt.Sprintf("test-%v", i)

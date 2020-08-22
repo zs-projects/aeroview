@@ -33,6 +33,19 @@ func BenchmarkRecsplitGet100K(b *testing.B) {
 	b.ReportMetric(float64(1000), "Get/op")
 }
 
+func BenchmarkRecsplitEliasFanoGet100K(b *testing.B) {
+	ds, keys := MakeDataset(100000, "string", 1000)
+
+	mph := recsplit.CompressWithEliasFano(recsplit.FromMap(ds, 20))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, key := range keys {
+			dummy = mph.Get(key)
+		}
+	}
+	b.ReportMetric(float64(1000), "Get/op")
+}
+
 func BenchmarkRecsplitSimpleGet100K(b *testing.B) {
 	ds, keys := MakeDataset(100000, "string", 1000)
 
