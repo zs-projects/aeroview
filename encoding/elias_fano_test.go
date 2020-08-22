@@ -1,6 +1,8 @@
 package encoding
 
 import (
+	"math/rand"
+	"sort"
 	"testing"
 )
 
@@ -16,6 +18,21 @@ func TestEliasFanoVector(t *testing.T) {
 	for i, v := range values {
 		if out := vec.Get(i); out != v {
 			t.Errorf("Get(%v) method for Elias Fano encoding failed got %v \t expected %v \n", i, out, v)
+		}
+	}
+}
+
+func TestEliasFanoVector2(t *testing.T) {
+	size := 10000
+	values := make([]uint64, 0, size)
+	for i := 0; i < size; i++ {
+		values = append(values, rand.Uint64())
+	}
+	sort.Slice(values, func(i, j int) bool { return values[i] < values[j] })
+	vec := MakeEliasFanoVector(values)
+	for i, v := range values {
+		if out := vec.Get(i); out != v {
+			t.Errorf("Get(%v) method for Elias Fano encoding failed got %v \t expected %v \t diff : %v\n", i, out, v, int(v)-int(out))
 		}
 	}
 }

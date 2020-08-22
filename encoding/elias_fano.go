@@ -83,6 +83,6 @@ func (e *EliasFanoVector) Get(i int) uint64 {
 	num := uint64(highBit)
 	lowBitsPosition := e.lowBitsCount * i
 	lowbits := uint64(e.lowBits.GetN(lowBitsPosition, e.lowBitsCount-1))
-	num = (num << e.lowBitsCount) | lowbits
+	num = (num << (e.lowBitsCount)) | lowbits
 	return num
 }
