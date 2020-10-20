@@ -1,125 +1,96 @@
 package benchmarks
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/zs-projects/aeroview/analysis/randutils"
 	"github.com/zs-projects/aeroview/rank"
 )
 
-func BenchmarkRankV01M(b *testing.B) {
-	slc := randutils.RandSlice64(1000000)
+var dummyInt int
+
+func BenchRank0(b *testing.B, sliceSize, indexSize int) {
+	slc, indexes := randutils.PrepareSliceAndIndexes(sliceSize, indexSize)
 	rk := rank.NewRank0(slc)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(1000000)
-	}
 	b.ResetTimer()
-	for _, idx := range indexes {
-		_ = rk.Get(idx)
+	for i := 0; i < b.N; i++ {
+		for _, idx := range indexes {
+			dummy = rk.Get(idx)
+		}
 	}
+	b.ReportMetric(float64(indexSize), "Rank/op")
 }
 
-func BenchmarkRankV11M(b *testing.B) {
-	slc := randutils.RandSlice64(1000000)
+func BenchRank1(b *testing.B, sliceSize, indexSize int) {
+	slc, indexes := randutils.PrepareSliceAndIndexes(sliceSize, indexSize)
 	rk := rank.NewRank1(slc)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(1000000)
-	}
 	b.ResetTimer()
-	for _, idx := range indexes {
-		_ = rk.Get(idx)
+	for i := 0; i < b.N; i++ {
+		for _, idx := range indexes {
+			dummy = rk.Get(idx)
+		}
 	}
+	b.ReportMetric(float64(indexSize), "Rank/op")
 }
 
-func BenchmarkRankPop1M(b *testing.B) {
-	slc := randutils.RandSlice64(1000000)
+func BenchRankPopCount(b *testing.B, sliceSize, indexSize int) {
+	slc, indexes := randutils.PrepareSliceAndIndexes(sliceSize, indexSize)
 	rk := rank.MakePopCount(slc)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(1000000)
-	}
 	b.ResetTimer()
-	for _, idx := range indexes {
-		_ = rk.Rank(idx)
+	for i := 0; i < b.N; i++ {
+		for _, idx := range indexes {
+			dummyInt = rk.Rank(idx)
+		}
 	}
+	b.ReportMetric(float64(indexSize), "Rank/op")
+}
+func BenchmarkRankV01M(b *testing.B) {
+	sliceSize := 1000000
+	indexSize := 1000
+	BenchRank0(b, sliceSize, indexSize)
 }
 func BenchmarkRankV0100K(b *testing.B) {
-	slc := randutils.RandSlice64(100000)
-	rk := rank.NewRank0(slc)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(100000)
-	}
-	b.ResetTimer()
-	for _, idx := range indexes {
-		_ = rk.Get(idx)
-	}
-}
-
-func BenchmarkRankV1100K(b *testing.B) {
-	slc := randutils.RandSlice64(100000)
-	rk := rank.NewRank1(slc)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(100000)
-	}
-	b.ResetTimer()
-	for _, idx := range indexes {
-		_ = rk.Get(idx)
-	}
-}
-
-func BenchmarkRankPop100K(b *testing.B) {
-	slc := randutils.RandSlice64(100000)
-	rk := rank.MakePopCount(slc)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(100000)
-	}
-	b.ResetTimer()
-	for _, idx := range indexes {
-		_ = rk.Rank(idx)
-	}
+	sliceSize := 100000
+	indexSize := 1000
+	BenchRank0(b, sliceSize, indexSize)
 }
 
 func BenchmarkRankV010K(b *testing.B) {
-	slc := randutils.RandSlice64(10000)
-	rk := rank.NewRank0(slc)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(10000)
-	}
-	b.ResetTimer()
-	for _, idx := range indexes {
-		_ = rk.Get(idx)
-	}
+	sliceSize := 10000
+	indexSize := 1000
+	BenchRank0(b, sliceSize, indexSize)
+}
+
+func BenchmarkRankV11M(b *testing.B) {
+	sliceSize := 1000000
+	indexSize := 1000
+	BenchRank1(b, sliceSize, indexSize)
+}
+func BenchmarkRankV1100K(b *testing.B) {
+	sliceSize := 100000
+	indexSize := 1000
+	BenchRank1(b, sliceSize, indexSize)
 }
 
 func BenchmarkRankV110K(b *testing.B) {
-	slc := randutils.RandSlice64(10000)
-	rk := rank.NewRank1(slc)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(10000)
-	}
-	b.ResetTimer()
-	for _, idx := range indexes {
-		_ = rk.Get(idx)
-	}
+	sliceSize := 10000
+	indexSize := 1000
+	BenchRank1(b, sliceSize, indexSize)
 }
 
-func BenchmarkRankPop10K(b *testing.B) {
-	slc := randutils.RandSlice64(10000)
-	rk := rank.MakePopCount(slc)
-	indexes := make([]int, b.N)
-	for i := range indexes {
-		indexes[i] = rand.Intn(10000)
-	}
-	b.ResetTimer()
-	for _, idx := range indexes {
-		_ = rk.Rank(idx)
-	}
+func BenchmarkRankPopcount1M(b *testing.B) {
+	sliceSize := 1000000
+	indexSize := 1000
+	BenchRankPopCount(b, sliceSize, indexSize)
+}
+func BenchmarkRankPopCount100K(b *testing.B) {
+	sliceSize := 100000
+	indexSize := 1000
+	BenchRankPopCount(b, sliceSize, indexSize)
+}
+
+func BenchmarkRankPopCount10K(b *testing.B) {
+	sliceSize := 10000
+	indexSize := 1000
+	BenchRankPopCount(b, sliceSize, indexSize)
 }

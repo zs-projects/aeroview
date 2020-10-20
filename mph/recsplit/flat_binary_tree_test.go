@@ -1,4 +1,4 @@
-package trees
+package recsplit
 
 import (
 	"math"

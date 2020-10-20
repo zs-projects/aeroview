@@ -15,7 +15,7 @@ import (
 // * On the cases where you have a few 8 bytes numbers and many 4 and 2 bytes numbers, varInt seems to outperform elias-fano.
 
 func main() {
-	sizes := []int{10, 100, 1000, 1000, 10000, 100000, 1000000}
+	sizes := []int{10, 100, 1000, 1000, 10000, 100000, 1000000, 5000000}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', tabwriter.AlignRight)
 	fmt.Fprintf(w, "Experiment ( 64 bits )\tOriginal\tVarInt\tElias-Fano\tImprovement\t\n")
 	for _, size := range sizes {

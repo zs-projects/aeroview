@@ -1,4 +1,4 @@
-package trees
+package radixenc
 
 type TRIE struct {
 	children map[rune]*TRIE

@@ -17,7 +17,7 @@ func TestBitVec_Get(t *testing.T) {
 		b.Set(int(n), 1)
 	}
 	for x := range indexes {
-		assert.Equal(t, 1, b.Get(int(x)))
+		assert.Equal(t, uint64(1), b.Get(int(x)))
 	}
 }
 

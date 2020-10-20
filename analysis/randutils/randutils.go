@@ -91,3 +91,12 @@ func Slice16To64(slice []uint16) []uint64 {
 	}
 	return out
 }
+
+func PrepareSliceAndIndexes(sliceSize, indexSize int) ([]uint64, []int) {
+	slc := RandSlice64(sliceSize)
+	indexes := make([]int, indexSize)
+	for i := range indexes {
+		indexes[i] = rand.Intn(sliceSize)
+	}
+	return slc, indexes
+}

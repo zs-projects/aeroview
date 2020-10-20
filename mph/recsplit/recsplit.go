@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 
 	"github.com/twmb/murmur3"
-	"github.com/zs-projects/aeroview/datastructures/trees"
 	"github.com/zs-projects/aeroview/mph/utils"
 )
 
@@ -20,8 +19,16 @@ const (
 type Recsplit struct {
 	values [][]byte
 	// One binary tree per bucket.
-	keys    []trees.CompactFBTree
+	keys    []CompactFBTree
 	cumSums []int
+}
+
+func (r Recsplit) SizeInBytes() int {
+	u := 0
+	for _, fbt := range r.keys {
+		u += fbt.SizeInBytes()
+	}
+	return len(r.cumSums)*8 + u
 }
 
 // GetKey Returns the looked for value
@@ -31,19 +38,20 @@ func (r Recsplit) GetKey(s string) int {
 	tree := r.keys[bucket]
 	node := tree.Root()
 	h := r.cumSums[bucket]
-	for {
-		if tree.IsLeaf(*node) {
-			return h + hash(s, uint64(node.Value.R))%node.Value.NbKeys
-		}
-		split := hash(s, uint64(node.Value.R)) % node.Value.NbKeys
-		if split < node.Value.NbKeys/2 {
+	out := -1
+	for node != 0 || (node == 0 && out == -1) {
+		R, nbKeys := tree.node(node)
+		split := hash(s, uint64(R)) % nbKeys
+		halfNbKeys := int(nbKeys / 2)
+		out = h + split
+		if split < halfNbKeys {
 			node = tree.LeftChild(node)
 		} else {
-			h = h + int(node.Value.NbKeys)/2
 			node = tree.RightChild(node)
+			h += halfNbKeys
 		}
-
 	}
+	return out
 }
 
 // Get Returns the looked for value
@@ -142,20 +150,21 @@ func recsplitWorker(wg *sync.WaitGroup, workCount *int64, splits chan recsplitBu
 
 func mphFromRecsplitLeafs(res map[int][]recsplitLeaf, nbBuckets int, values map[string][]byte) Recsplit {
 	mph := Recsplit{
-		keys:    make([]trees.CompactFBTree, nbBuckets),
+		keys:    make([]CompactFBTree, nbBuckets),
 		values:  make([][]byte, len(values)),
 		cumSums: make([]int, 1, nbBuckets),
 	}
 	cumSum := 0
 	for bucket, leafs := range res {
-		tleafs := make([]trees.TreeLeaf, 0, len(leafs))
+		tleafs := make([]TreeLeaf, 0, len(leafs))
 		for _, leaf := range leafs {
 			tleafs = append(tleafs, leaf)
 		}
-		mph.keys[bucket] = trees.FromFBTree(trees.MakeFBTreeFromLeafs(tleafs))
+		mph.keys[bucket] = FromFBTree(MakeFBTreeFromLeafs(tleafs))
 	}
 	for _, value := range mph.keys {
-		cumSum += value.Root().Value.NbKeys
+		_, nbKeys := value.node(value.Root())
+		cumSum += nbKeys
 		mph.cumSums = append(mph.cumSums, cumSum)
 	}
 	for key, value := range values {
@@ -175,10 +184,10 @@ type recsplitLeaf struct {
 	recsplitBucket
 }
 
-func (r recsplitLeaf) Values() []trees.FBValue {
-	vals := make([]trees.FBValue, 0, len(r.parents))
+func (r recsplitLeaf) Values() []FBValue {
+	vals := make([]FBValue, 0, len(r.parents))
 	for i, v := range r.parents {
-		vals = append(vals, trees.FBValue{NbKeys: int(r.sizes[i]), R: int(v)})
+		vals = append(vals, FBValue{NbKeys: int(r.sizes[i]), R: int(v)})
 	}
 	return vals
 }
@@ -283,10 +292,10 @@ func checkForCollisions(r uint64, keys []string, collisions []bool) bool {
 	return false
 }
 
+var mask uint64 = (1<<64 - 1<<63) - 1
+
 func hash(data string, r uint64) int {
 	hash := murmur3.SeedStringSum64(r, data)
-	if int(hash) <= 0 {
-		return -int(hash)
-	}
-	return int(hash)
+	// put the highest bit to 0, to make sure that we have a positive number when converting.ut the highest bit to 0, to make sure that we have a positive number when converting.
+	return int(hash & mask)
 }

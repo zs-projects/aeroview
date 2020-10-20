@@ -8,7 +8,7 @@ import (
 )
 
 func TestCHD_Get(t *testing.T) {
-	nValues := 100
+	nValues := 10000
 
 	m := make(map[string][]byte)
 	for i := 0; i < nValues; i++ {

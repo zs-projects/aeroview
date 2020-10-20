@@ -19,8 +19,12 @@ type PopCount struct {
 	Data            bits.Vector
 }
 
+func (r *PopCount) SizeInBytes() int {
+	return len(r.SuperBlockRanks)*8 + len(r.Blocks)*2 + len(r.Data)*8 + 6*8
+}
+
 // MakePopCount creates a RankPopCount instance.
-func MakePopCount(b bits.Vector) PopCount {
+func MakePopCount(b bits.Vector) *PopCount {
 	// Blocksize is 64 bits for mecanichal sympathy.
 	rm := makeRankMetadata(BLOCKSIZE, len(b)*64)
 
@@ -43,11 +47,11 @@ func MakePopCount(b bits.Vector) PopCount {
 		}
 		diff = 0
 	}
-	return rk
+	return &rk
 }
 
 // Rank ruturns the number of 1 bits in the bitvector for the first idx bits.
-func (r PopCount) Rank(idx int) int {
+func (r *PopCount) Rank(idx int) int {
 	spblocIdx := idx / r.metadata.SuperBlockSize
 	blockIdx := idx / BLOCKSIZE
 	rankSuperBlock := r.SuperBlockRanks[spblocIdx]
@@ -59,7 +63,7 @@ func (r PopCount) Rank(idx int) int {
 }
 
 // Select return the idx of the i'th one in the underlying bit vector.
-func (r PopCount) Select(idx uint64) uint64 {
+func (r *PopCount) Select(idx uint64) uint64 {
 	spBlock := r.identifySuperBlock(idx)
 	spBlockRank := r.SuperBlockRanks[spBlock]
 	if spBlockRank >= idx && spBlock > 0 {
@@ -107,28 +111,14 @@ func (r PopCount) identifySuperBlock(i uint64) int {
 
 func (r PopCount) identifyBlock(i, supBlockValue uint64, lowerBlockIdx, upperBlockIdx int) int {
 	diff := i - supBlockValue
-	blocks := r.Blocks[lowerBlockIdx:upperBlockIdx]
-	hi := upperBlockIdx - lowerBlockIdx
-	lo := 0
-	pos := (hi - lo) / 2
-	for hi > lo {
-		if v := uint64(blocks[pos]); v < diff {
-			lo = pos + 1
-			pos = (hi-lo)/2 + lo
-		} else if v > diff {
-			hi = pos - 1
-			pos = (hi-lo)/2 + lo
-		} else {
-			for i := pos - 1; i >= 0; i-- {
-				if blocks[pos] != blocks[i] {
-					return i + 1
-				}
-			}
+	for idx := lowerBlockIdx; idx <= upperBlockIdx; idx++ {
+		if v := uint64(r.Blocks[idx]); v >= diff {
+			return idx - lowerBlockIdx
 		}
 	}
-	return pos
+	return upperBlockIdx - lowerBlockIdx
 }
 
-func (r PopCount) Get(idx int) int {
+func (r *PopCount) Get(idx int) uint64 {
 	return r.Data.Get(idx)
 }

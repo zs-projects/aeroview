@@ -1,4 +1,4 @@
-package trees
+package radixenc
 
 import (
 	"testing"
@@ -46,8 +46,4 @@ func TestMakeRadixTree(t *testing.T) {
 	if len(diff) != 0 || diff != nil {
 		t.Errorf("Radix Tree not as expected %# v", diff)
 	}
-}
-
-func TestCompressSubTrie(t *testing.T) {
-
 }

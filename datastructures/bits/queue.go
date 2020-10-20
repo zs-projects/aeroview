@@ -107,6 +107,14 @@ func (m Queue) GetN(i int, n int) uint64 {
 	position := i / BLOCKSIZE
 	offset := i % BLOCKSIZE
 	mask := uint64((1 << (n + 1)) - 1)
+	if 64-offset < n {
+		missingBits := n - (64 - offset)
+		mask1 := uint64((1<<64)-1) - uint64(1<<(offset)-1)
+		mask2 := uint64((1 << (missingBits + 1)) - 1)
+		firstPart := (m.data[position] & mask1) >> offset
+		secondPart := (m.data[position+1] & mask2) << (64 - offset)
+		return firstPart | secondPart
+	}
 	return m.data[position] >> offset & mask
 }
 

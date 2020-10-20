@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sort"
 
-	"github.com/zs-projects/aeroview/mph/farmhash"
+	"github.com/twmb/murmur3"
 	"github.com/zs-projects/aeroview/mph/utils"
 )
 
@@ -17,6 +17,10 @@ type CHD struct {
 	keys   []string
 	values [][]byte
 	h      []int32
+}
+
+func (chd *CHD) SizeInBytes() int {
+	return len(chd.keys)*8 + len(chd.h)*4
 }
 
 func (chd *CHD) Get(key string) ([]byte, bool) {
@@ -128,6 +132,10 @@ func FromMap(kv map[string][]byte) (*CHD, error) {
 	}, nil
 }
 
+var mask uint64 = (1<<64 - 1<<63) - 1
+
 func hash(data string, r uint32) int {
-	return int(farmhash.Hash32(data) ^ r)
+	hash := murmur3.SeedStringSum64(uint64(r), data)
+	// put the highest bit to 0, to make sure that we have a positive number when converting.ut the highest bit to 0, to make sure that we have a positive number when converting.
+	return int(hash & mask)
 }
