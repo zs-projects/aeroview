@@ -9,7 +9,7 @@ import (
 )
 
 func TestFromMap(t *testing.T) {
-	size := 10
+	size := 100
 	mp := getSampleMap(size)
 	memtable := FromMap(mp)
 	assert.Equal(t, len(memtable.keys), size)
