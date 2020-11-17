@@ -9,7 +9,7 @@ import (
 
 func TestMemtableReadWrite(t *testing.T) {
 	var buf bytes.Buffer
-	size := 100
+	size := 1000
 	mp := getSampleMap(size)
 	memtable := FromMap(mp)
 	err := Write(memtable, &buf)
