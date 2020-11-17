@@ -35,7 +35,7 @@ We can see that the naive solution above has an `O(n)` time complexity. We can d
 
 **First improvement**: Let's keep the structure above and make one change. Upon creation of the `Memtable` we can sort the keys and keep them sorted at all time. Then, we can use binary search to find the `key`. Using this first improvement we can improve the time complexity of the get operation and achieve `O(log(n))`
 
-### Improved design:
+## Improved design:
 
 By changing the way we store the keys, we can even improve the time complexity of the `Get` operation and achieve `O(log(log(n)))`. The algorithm we will use to achieve this improvement is called [interpolation search](https://www.geeksforgeeks.org/interpolation-search/). This algorithm can achieve `O(log(log(n)))`a time complexity if and only if: 
 
@@ -56,6 +56,67 @@ type Memtable struct {
 ```
 
 Now, when we receive a `key`, we hash it and we use [interpolation search](https://www.geeksforgeeks.org/interpolation-search/) on the `hashedKeys` field to retrieve the `index`. Once we have the index, we get the values back as shown before.
+
+### Interpolation search : 
+Now let's take a look at how interpolation search works. First we have to remember the assumptions : 
+
+1. The keys are uniformly distributed 
+2. The keys are sorted.
+
+**How could we estime the value of the middle key in the `keys` array ?**
+
+One strategy could be to add both the first and the last key and devide them by two. This is a reasonnable strategy because of the distribution hypothesis. Here is an intuition on why this makes sens: In order to evenly distribute the keys, we have to make the differences betweens two pair of consecutive keys almost constant. 
+TODO: add an illustration
+
+**How could we narrow down the region where a key might be ?**
+let's say we are looking for a specific `key`. We can mesure it's distance from the smallest key in set. Now, if we use the  intuition from the previous step. we could come up with a reasonable estimate for where `key` would be. Here is how : 
+
+```go 
+func (memtable Memtable) PositionEstimate(key uint64, low, high int) int { 
+    // if we already know from somewhere else that the key is between `low` and `high` 
+    // here is how we can produce and educated guess on where it could be.
+	span := float64(len(m.keys))
+	last := float64(m.keys[high])
+	first := float64(m.keys[low])
+    // Now that we have the slope, we have an estimate 
+    // the tells us at what rate the keys are increasing
+    slope := span / (last - first)
+    nbSteps := slope * float64(key-m.keys[low])
+    return lo + int(math.Min(float64(hi-lo-1), float64(nbSteps)))
+}
+```
+
+Of course, the above estimate is noisy ( it's variance is high, because it is produced with one sample !). However, it still good enough to drive our search. Here is how : 
+
+```go
+func (memtable Memtable) SimplifiedInterpolatedSearch(key uint64) (position int, ok bool) {
+    low := 0
+    high := len(memtable.keys) -1
+    for memtable.keys[low] < key { 
+        candidateIndex := memtable.PositionEstimate(key, 0, len(memtable.keys) - 1)
+        if m.keys[candidateIndex] < hashedKey {
+            low = candidateIndex + 1
+        } else {
+            high = candidateIndex
+        }
+    }
+    if m.keys[low] != key {
+		return nil, false
+    }
+    return low, true
+}
+```
+
+The trick here, is to produce a noisy estimate and then use it to narrow down the search region and then repreat the process until the key is found.
+
+#### Optimisations: 
+There are two optimisations that we make in the practical implementation : 
+
+1. When `high` - `low` gets smaller than 64, we revert to a linear search algorithm.
+2. We only compute the `slope` once at the start of the algorithm. We have observed, that even though it could add some iterations to the algorthms, it made each iteration way faster and resulted in a faster implementation.
+
+### Writing and Reading from disk: 
+TODO: write about how to serialize/deserialise the tructure
 
 ### Limitations: 
 
