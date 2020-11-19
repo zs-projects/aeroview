@@ -63,6 +63,8 @@ Now let's take a look at how interpolation search works. First we have to rememb
 1. The keys are uniformly distributed 
 2. The keys are sorted.
 
+![visual explanation of interpollated search](./interpollated_search.gif)
+
 **How could we estime the value of the middle key in the `keys` array ?**
 
 One strategy could be to add both the first and the last key and devide them by two. This is a reasonnable strategy because of the distribution hypothesis. Here is an intuition on why this makes sens: In order to evenly distribute the keys, we have to make the differences betweens two pair of consecutive keys almost constant. 
