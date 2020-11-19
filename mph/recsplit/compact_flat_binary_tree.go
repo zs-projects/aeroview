@@ -79,10 +79,10 @@ func compressStructure(q *bits.Queue, u *FBTree) ([]int, []int) {
 	return nodesR, nodesNBKeys
 }
 
-func (f CompactFBTree) node(offset int) (R int, nbKeys int) {
-	return f.nodesR[offset], f.nodesNBKeys[offset]
+func (c CompactFBTree) node(offset int) (r, nbKeys int) {
+	return c.nodesR[offset], c.nodesNBKeys[offset]
 }
 
-func (f CompactFBTree) IsLeaf(offset int) bool {
-	return !(f.structure.Get(2*offset) == 1 || f.structure.Get(2*offset+1) == 1)
+func (c CompactFBTree) IsLeaf(offset int) bool {
+	return !(c.structure.Get(2*offset) == 1 || c.structure.Get(2*offset+1) == 1)
 }

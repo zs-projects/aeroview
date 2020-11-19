@@ -31,7 +31,7 @@ func (r Simple) GetKey(s string) int {
 		nbKeys := node.nbKeys
 		R := node.R
 		split := hash(s, uint64(R)) % nbKeys
-		halfNbKeys := int(nbKeys / 2)
+		halfNbKeys := nbKeys / 2
 		out = h + split
 		if split < halfNbKeys {
 			node = node.Left

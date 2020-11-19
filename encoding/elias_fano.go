@@ -10,12 +10,11 @@ import (
 
 // EliasFanoVector encodes a list of ascending integers using the Elias Fano Code.
 type EliasFanoVector struct {
-	highBits      bits.Queue
-	lowBits       bits.Queue
-	rank          *rank.PopCount
-	nElements     int // the number of elements in the data structure.
-	lowBitsCount  int // The number of bits used to encode the low bits.
-	highBitsCount int // The number of bits used to encode the low bits.
+	highBits     bits.Queue
+	lowBits      bits.Queue
+	rank         *rank.PopCount
+	nElements    int // the number of elements in the data structure.
+	lowBitsCount int // The number of bits used to encode the low bits.
 }
 
 // MakeEliasFanoVector encodes a list of uint64 using EliasFano Code.
@@ -26,7 +25,7 @@ func MakeEliasFanoVector(values []uint64) EliasFanoVector {
 	// Important to ensure mechanical sympathie and that the lower bits of any numbers
 	// will never overleap between two bytes
 	if lowerBitCount%2 != 0 {
-		lowerBitCount = lowerBitCount + 1
+		lowerBitCount++
 	}
 	if lowerBitCount < 2 {
 		// Trick to handle long arrays of very small 16 bits numbers.
@@ -40,7 +39,7 @@ func MakeEliasFanoVector(values []uint64) EliasFanoVector {
 		lowBits := v & lowBitsMask
 		highDelta := highBits - prev
 		for k := int64(0); k < lowerBitCount; k++ {
-			lowBitsQ.PushBack(uint64(lowBits >> k))
+			lowBitsQ.PushBack(lowBits >> k)
 		}
 		if highDelta == 0 {
 			highBitsQ.PushBack(1)
@@ -80,9 +79,9 @@ func (e *EliasFanoVector) Get(i int) uint64 {
 		panic(fmt.Sprintf("Trying to access element with index %v on EliasFanoVector on length %v", i, e.nElements))
 	}
 	highBit := e.rank.Select(uint64(i+1)) - uint64(i)
-	num := uint64(highBit)
+	num := highBit
 	lowBitsPosition := e.lowBitsCount * i
-	lowbits := uint64(e.lowBits.GetN(lowBitsPosition, e.lowBitsCount-1))
+	lowbits := e.lowBits.GetN(lowBitsPosition, e.lowBitsCount-1)
 	num = (num << (e.lowBitsCount)) | lowbits
 	return num
 }

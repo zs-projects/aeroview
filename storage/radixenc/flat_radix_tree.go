@@ -59,20 +59,20 @@ func MakeFlatRadixTree(r RadixTree) FlatRadixTree {
 	}
 }
 
-func (f FlatRadixTree) Children(nodeIdx int) (nbChildren, startPos int) {
+func (f *FlatRadixTree) Children(nodeIdx int) (nbChildren, startPos int) {
 	// TODO: Implement the encoding function.
 	return f.structure.Children(nodeIdx)
 }
 
-func (f FlatRadixTree) Size() int {
+func (f *FlatRadixTree) Size() int {
 	return (len(f.data) * 4) + len(f.leafs)/8 + 4 + len(f.offsetsStart)/8 + (len(f.leafs) * f.maxChildren / 8)
 }
 
-func (f FlatRadixTree) Overhead() float64 {
+func (f *FlatRadixTree) Overhead() float64 {
 	return float64(f.Size()) / float64(len(f.data)*4)
 }
 
-func (f FlatRadixTree) Encode(data []string) [][]int {
+func (f *FlatRadixTree) Encode(data []string) [][]int {
 	// TODO: Implement the encoding function.
 	ret := make([][]int, 0, len(data))
 	node := 0 // For root node
@@ -103,7 +103,7 @@ func (f FlatRadixTree) Encode(data []string) [][]int {
 	return ret
 }
 
-func (f FlatRadixTree) Decode(encodedData [][]int) []string {
+func (f *FlatRadixTree) Decode(encodedData [][]int) []string {
 	out := make([]string, 0, len(encodedData))
 	for _, encodedStr := range encodedData {
 		str := make([]byte, 0, 2048)
@@ -115,7 +115,7 @@ func (f FlatRadixTree) Decode(encodedData [][]int) []string {
 	return out
 }
 
-func (f FlatRadixTree) DecodeFast(origSize int, encodedData []byte) []byte {
+func (f *FlatRadixTree) DecodeFast(origSize int, encodedData []byte) []byte {
 	out := make([]byte, origSize)
 	cur := uint32(0)
 	for i := 0; i < len(encodedData); i += 4 {

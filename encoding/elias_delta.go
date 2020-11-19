@@ -26,7 +26,7 @@ func (EliasDeltaEncoding) Encode64(v uint64) ([]uint64, int) {
 		b.PushBack(uint64(N1 >> i))
 	}
 	for i := N1 - 2; i >= 0; i-- {
-		b.PushBack(uint64(v >> i))
+		b.PushBack(v >> i)
 	}
 	return b.Data(), b.Len()
 }
@@ -38,7 +38,7 @@ func (EliasDeltaEncoding) Decode64(b []uint64, size int) (uint64, error) {
 		return 0, err
 	}
 	num := uint64(1)
-	len := 1
+	length := 1
 	lengthOfLen := 0
 	for {
 		if !bq.Empty() && bq.Pop() == 0 {
@@ -48,12 +48,12 @@ func (EliasDeltaEncoding) Decode64(b []uint64, size int) (uint64, error) {
 		}
 	}
 	for i := 0; i < lengthOfLen; i++ {
-		len <<= 1
+		length <<= 1
 		if !bq.Empty() && bq.Pop() == 0b1 {
-			len |= 1
+			length |= 1
 		}
 	}
-	for i := 0; i < len-1; i++ {
+	for i := 0; i < length-1; i++ {
 		num <<= 1
 		if !bq.Empty() && bq.Pop() == 0b1 {
 			num |= 1

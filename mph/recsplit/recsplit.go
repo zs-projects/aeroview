@@ -42,7 +42,7 @@ func (r Recsplit) GetKey(s string) int {
 	for node != 0 || (node == 0 && out == -1) {
 		R, nbKeys := tree.node(node)
 		split := hash(s, uint64(R)) % nbKeys
-		halfNbKeys := int(nbKeys / 2)
+		halfNbKeys := nbKeys / 2
 		out = h + split
 		if split < halfNbKeys {
 			node = tree.LeftChild(node)
@@ -101,7 +101,7 @@ func FromMap(data map[string][]byte, nbWorkers int) Recsplit {
 	return mph
 }
 
-func makeWorkerPool(nbWokers int, initialWorkCount int) (chan<- recsplitBucket, <-chan recsplitLeaf) {
+func makeWorkerPool(nbWokers, initialWorkCount int) (chan<- recsplitBucket, <-chan recsplitLeaf) {
 	var wg sync.WaitGroup
 	work := int64(initialWorkCount)
 	// Buffering in the channels here is important to avoid deadlocks
@@ -195,8 +195,6 @@ func (r recsplitLeaf) Path() []bool {
 	return r.isRight
 }
 
-type recsplitLeafs []recsplitLeaf
-
 func (b recsplitBucket) split() (recsplitBucket, recsplitBucket) {
 	r, lKeys, rKeys := b.partitionKeys()
 	left := recsplitBucket{
@@ -281,7 +279,7 @@ func checkForCollisions(r uint64, keys []string, collisions []bool) bool {
 	}
 
 	for _, key := range keys {
-		h := hash(key, uint64(r)) % len(keys)
+		h := hash(key, r) % len(keys)
 		if !collisions[h] {
 			collisions[h] = true
 		} else {

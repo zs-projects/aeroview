@@ -36,7 +36,7 @@ func MakeBitQueueFromSlice(b []uint64, size int) (Queue, error) {
 
 // Len returns the number of bits stored.
 func (m Queue) Vector() Vector {
-	return Vector(m.data)
+	return m.data
 }
 
 // Len returns the number of bits stored.
@@ -49,11 +49,11 @@ func (m Queue) Len() int {
 // Assumes little endian encoding.
 func (m *Queue) PushBack(bit uint64) {
 	if m.remainingCapacity > 0 {
-		newValue := m.data[len(m.data)-1] | uint64((bit&0b1)<<(BLOCKSIZE-m.remainingCapacity))
+		newValue := m.data[len(m.data)-1] | (bit&0b1)<<(BLOCKSIZE-m.remainingCapacity)
 		m.data[len(m.data)-1] = newValue
 		m.remainingCapacity--
 	} else {
-		m.data = append(m.data, uint64((bit & 0b1)))
+		m.data = append(m.data, (bit & 0b1))
 		m.remainingCapacity = (BLOCKSIZE - 1)
 	}
 }
@@ -103,7 +103,7 @@ func (m Queue) Get(i int) uint64 {
 }
 
 // Get return the bit value at position int
-func (m Queue) GetN(i int, n int) uint64 {
+func (m Queue) GetN(i, n int) uint64 {
 	position := i / BLOCKSIZE
 	offset := i % BLOCKSIZE
 	mask := uint64((1 << (n + 1)) - 1)
@@ -124,7 +124,7 @@ func (m Queue) Toggle(i int) {
 	position := i / BLOCKSIZE
 	if position < len(m.data) {
 		offset := i % BLOCKSIZE
-		m.data[position] = m.data[position] ^ 1<<(offset)
+		m.data[position] ^= 1 << (offset)
 	}
 }
 
@@ -134,6 +134,6 @@ func (m Queue) High(i int) {
 	position := i / BLOCKSIZE
 	if position < len(m.data) {
 		offset := i % BLOCKSIZE
-		m.data[position] = m.data[position] | 1<<offset
+		m.data[position] |= 1 << offset
 	}
 }

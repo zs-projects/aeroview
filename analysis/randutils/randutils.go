@@ -71,7 +71,7 @@ func VarInt64(slice []uint64) []byte {
 	out := make([]byte, len(slice)*12)
 	i := 0
 	for _, k := range slice {
-		i += binary.PutUvarint(out[i:], uint64(k))
+		i += binary.PutUvarint(out[i:], k)
 	}
 	return out[:i]
 }
