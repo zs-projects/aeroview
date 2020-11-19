@@ -43,7 +43,7 @@ func (r RecsplitEF) GetKey(s string) int {
 	for node != 0 || (node == 0 && out == -1) {
 		R, nbKeys := tree.node(node)
 		split := hash(s, uint64(R)) % nbKeys
-		halfNbKeys := int(nbKeys / 2)
+		halfNbKeys := nbKeys / 2
 		out = int(h) + split
 		if split < halfNbKeys {
 			node = tree.LeftChild(node)

@@ -25,7 +25,7 @@ func (chd *CHD) SizeInBytes() int {
 
 func (chd *CHD) Get(key string) ([]byte, bool) {
 	// 1. get the bucket
-	hIndex := int(hash(key, rNot)) % len(chd.h)
+	hIndex := hash(key, rNot) % len(chd.h)
 
 	// 2. apply the correct hash on the key
 	var keyIndex int
@@ -85,7 +85,7 @@ func FromMap(kv map[string][]byte) (*CHD, error) {
 			keyIndex := hash(key, r) % len(keys)
 
 			// if conflict remains, re-init
-			if len(keys[keyIndex]) != 0 || assignedIndexes[keyIndex] {
+			if keys[keyIndex] != "" || assignedIndexes[keyIndex] {
 				bucketIndex = 0
 				assignedIndexes = map[int]bool{}
 				r++
@@ -109,7 +109,7 @@ func FromMap(kv map[string][]byte) (*CHD, error) {
 	// 3. get free slots so that we can do some manual assignment where bucket has len 1.
 	freeSlots := make([]int, 0)
 	for i, key := range keys {
-		if len(key) == 0 {
+		if key == "" {
 			freeSlots = append(freeSlots, i)
 		}
 	}

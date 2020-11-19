@@ -7,7 +7,6 @@ import (
 	"github.com/zs-projects/aeroview/mph/farmhash"
 )
 
-// Memtable ...
 type Memtable struct {
 	originalKeys []string
 	keys         []uint64
@@ -33,7 +32,7 @@ func FromMap(data map[string][]byte) Memtable {
 	offsets := make([]uint32, 1, len(data)-1)
 	currOffset := uint32(0)
 	for _, stringKey := range originalKeys {
-		value := []byte(data[stringKey])
+		value := data[stringKey]
 		currOffset += uint32(len(value))
 		offsets = append(offsets, currOffset)
 		dataBytes = append(dataBytes, value...)
@@ -88,7 +87,7 @@ func (m *Memtable) GetUnsafe(key string) ([]byte, bool) {
 
 	for m.keys[lo] < hashedKey {
 		midFP := slope * float64(hashedKey-m.keys[lo])
-		mid := lo + int(math.Min(float64(hi-lo-1), float64(midFP)))
+		mid := lo + int(math.Min(float64(hi-lo-1), midFP))
 
 		if m.keys[mid] < hashedKey {
 			lo = mid + 1

@@ -62,5 +62,5 @@ func countBits(idx int, data []uint64) int {
 	shift := idx % BLOCKSIZE
 	mask := uint64(1<<(shift+1) - 1)
 	acc += bits.OnesCount64(data[j] & mask)
-	return int(acc)
+	return acc
 }

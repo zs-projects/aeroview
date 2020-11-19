@@ -9,7 +9,7 @@ type metadata struct {
 	NbBits              int
 }
 
-func makeRankMetadata(blockSize int, nbBits int) metadata {
+func makeRankMetadata(blockSize, nbBits int) metadata {
 	nbBlocks := ceil_devide(nbBits, blockSize)
 	nbSuperBlocks := valueOrOne(floor_devide(nbBits, blockSize*nbBits_floor(nbBits)))
 	superBlockSize := (nbBits / nbSuperBlocks) - (nbBits/nbSuperBlocks)%blockSize

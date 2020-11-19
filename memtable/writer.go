@@ -6,22 +6,22 @@ import (
 	"io"
 )
 
-func Write(m Memtable, w io.Writer) error {
+func Write(m *Memtable, w io.Writer) error {
 	nbKeys := uint64(len(m.keys))
-	headerLen := uint64(8 + 8 + 12*nbKeys)
+	headerLen := 8 + 8 + 12*nbKeys
 	buf := make([]byte, 16)
 	binary.LittleEndian.PutUint64(buf[:8], headerLen)
 	binary.LittleEndian.PutUint64(buf[8:], nbKeys)
 	n, err := w.Write(buf)
 	if n != len(buf) || err != nil {
-		return fmt.Errorf("Can't write header")
+		return fmt.Errorf("can't write header")
 	}
 	buf = buf[:8]
 	for _, key := range m.keys {
 		binary.LittleEndian.PutUint64(buf, key)
 		n, err = w.Write(buf)
 		if n != len(buf) || err != nil {
-			return fmt.Errorf("Can't write key %v", key)
+			return fmt.Errorf("can't write key %v", key)
 		}
 	}
 
@@ -30,12 +30,12 @@ func Write(m Memtable, w io.Writer) error {
 		binary.LittleEndian.PutUint32(buf, offset)
 		n, err = w.Write(buf)
 		if n != len(buf) || err != nil {
-			return fmt.Errorf("Can't write offset %v", offset)
+			return fmt.Errorf("can't write offset %v", offset)
 		}
 	}
 	n, err = w.Write(m.data)
 	if n != len(m.data) || err != nil {
-		return fmt.Errorf("Can't write data")
+		return fmt.Errorf("can't write data")
 	}
 	return nil
 }

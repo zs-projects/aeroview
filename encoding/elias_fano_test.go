@@ -7,7 +7,7 @@ import (
 )
 
 func TestEliasFanoVector(t *testing.T) {
-	//0101101000001 0100001100
+	// 0101101000001 0100001100
 	values := []uint64{5, 8, 8, 15, 32}
 	vec := MakeEliasFanoVector(values)
 	highBits := vec.highBits.Vector()[0]

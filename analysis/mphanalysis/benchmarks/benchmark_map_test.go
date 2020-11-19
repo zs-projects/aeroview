@@ -49,7 +49,7 @@ func BenchmarkRecsplitEliasFanoGet100K(b *testing.B) {
 func BenchmarkRecsplitSimpleGet100K(b *testing.B) {
 	ds, keys := MakeDataset(100000, "string", 1000)
 
-	mph := recsplit.Recsplit(recsplit.FromMap(ds, 20))
+	mph := recsplit.FromMap(ds, 20)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for _, key := range keys {

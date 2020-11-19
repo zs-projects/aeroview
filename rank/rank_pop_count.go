@@ -90,7 +90,7 @@ func (r *PopCount) Select(idx uint64) uint64 {
 	return uint64(0)
 }
 
-func (r PopCount) identifySuperBlock(i uint64) int {
+func (r *PopCount) identifySuperBlock(i uint64) int {
 	sblocks := r.SuperBlockRanks
 	hi := len(sblocks) - 1
 	lo := 0
@@ -109,7 +109,7 @@ func (r PopCount) identifySuperBlock(i uint64) int {
 	return pos
 }
 
-func (r PopCount) identifyBlock(i, supBlockValue uint64, lowerBlockIdx, upperBlockIdx int) int {
+func (r *PopCount) identifyBlock(i, supBlockValue uint64, lowerBlockIdx, upperBlockIdx int) int {
 	diff := i - supBlockValue
 	for idx := lowerBlockIdx; idx <= upperBlockIdx; idx++ {
 		if v := uint64(r.Blocks[idx]); v >= diff {

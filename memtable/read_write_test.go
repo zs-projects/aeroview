@@ -12,7 +12,7 @@ func TestMemtableReadWrite(t *testing.T) {
 	size := 1000
 	mp := getSampleMap(size)
 	memtable := FromMap(mp)
-	err := Write(memtable, &buf)
+	err := Write(&memtable, &buf)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}

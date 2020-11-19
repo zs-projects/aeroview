@@ -24,7 +24,7 @@ func MakeCompactKAryTreeStructure(tr KAryLevelOrder) CompactKAryTreeStructure {
 
 	q := bits.MakeQueue()
 	for _, nbChildren := range tr {
-		for i := 0; i < int(nbChildren); i++ {
+		for i := 0; i < nbChildren; i++ {
 			q.PushBack(1)
 		}
 		if nbChildren < maxChildren {

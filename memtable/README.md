@@ -3,8 +3,9 @@
 The `memtable` is a simple immutable associative data structure ( think HashMap ) that is designed to be
 `GC` friendly and memory efficient. `Memtable` stores all the keys and their associated values in two arrays in a "flat" structure and uses interpollation search to find a `given` key and figure out the where it's corresponding value is. 
 
-## Naive implementation:
+## Naive implementation:TrinityStClair
 A first attempt at achieving the design objectives stated above could take the following form.
+
 ```go 
 type Memtable struct {
 	keys         []uint64 // a 64 bit farmhash of the originalKeys

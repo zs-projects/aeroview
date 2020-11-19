@@ -34,7 +34,7 @@ type BinaryTreeStructure interface {
 	RightChild(position int) (childPosition int, exists bool)
 }
 
-//KAryTreeStructure is an interface that provides basic operations for k-ary trees.
+// KAryTreeStructure is an interface that provides basic operations for k-ary trees.
 type KAryTreeStructure interface {
 	Children(nodPos int) (nbChildren, startPosition int)
 }

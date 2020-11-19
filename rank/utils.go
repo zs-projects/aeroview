@@ -8,7 +8,7 @@ import (
 func count(n int) int {
 	nBits := 0
 	for n != 0 {
-		n = n & (n - 1)
+		n &= (n - 1)
 		nBits++
 	}
 	return nBits

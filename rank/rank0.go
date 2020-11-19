@@ -3,9 +3,8 @@ package rank
 import "github.com/zs-projects/aeroview/datastructures/bits"
 
 const (
-	smallBlockSize  = 8
-	bigBlockSize    = 64
-	smallToBigRatio = 8
+	smallBlockSize = 8
+	bigBlockSize   = 64
 )
 
 type Rank0 struct {

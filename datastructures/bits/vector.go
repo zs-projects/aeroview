@@ -21,13 +21,13 @@ func (b *Vector) Set(idx int, val uint8) {
 	(*b)[index] |= uint64(val&1) << offset
 }
 
-func (b Vector) Get(idx int) uint64 {
+func (b *Vector) Get(idx int) uint64 {
 	index := idx / BLOCKSIZE
 	offset := idx % BLOCKSIZE
-	if index >= len(b) {
+	if index >= len(*b) {
 		return 0
 	}
-	return (b)[index] >> offset & 1
+	return (*b)[index] >> offset & 1
 }
 
 func (b *Vector) Get8BitRange(low, high int) uint8 {

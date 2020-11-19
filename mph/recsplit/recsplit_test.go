@@ -193,7 +193,7 @@ func toStringSet(st []string) map[string]struct{} {
 	return set
 }
 
-func haveCommonElements(setA map[string]struct{}, setB map[string]struct{}) bool {
+func haveCommonElements(setA, setB map[string]struct{}) bool {
 	for key := range setA {
 		if _, ok := setB[key]; ok {
 			return true
