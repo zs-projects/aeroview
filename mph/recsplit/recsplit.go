@@ -23,7 +23,7 @@ type Recsplit struct {
 	cumSums []int
 }
 
-func (r Recsplit) SizeInBytes() int {
+func (r *Recsplit) SizeInBytes() int {
 	u := 0
 	for _, fbt := range r.keys {
 		u += fbt.SizeInBytes()

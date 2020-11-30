@@ -2,50 +2,70 @@ package memtable
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
+	"syscall"
 )
 
-func FromReader(r io.Reader) Memtable {
-	return NewReader(r).ReadHeader().ReadKeysAndOffsets().ReadValues()
+var (
+	ErrHeaderRead = fmt.Errorf("can't read header")
+)
+
+func MemtableFromReader(r io.Reader) Memtable {
+	return NewReader(r).
+		ReadHeaderMetadata().
+		ReadKeysAndOffsets().
+		ReadValues()
 }
 
-type memtableReader struct{ reader io.Reader }
+func MMapMemtableFromFile(f *os.File) MemoryMappedMemtable {
 
-func NewReader(r io.Reader) memtableReader {
-	return memtableReader{reader: r}
+	return NewReader(f).
+		ReadHeaderMetadata().
+		ReadKeysAndOffsets().
+		MemoryMapValues(f)
 }
 
-func (m memtableReader) ReadHeader() memtablePartialHeader {
+func NewReader(r io.Reader) readMemtableHeader {
+	return readMemtableHeader{r}
+}
+
+type readMemtableHeader struct{ io.Reader }
+
+func (m readMemtableHeader) ReadHeaderMetadata() readMemtableMetadata {
 	buf := make([]byte, 8)
-	n, _ := m.reader.Read(buf)
+	n, err := m.Read(buf)
 	if n != 8 {
-		panic("can't read headerLen")
+		panic("can't read header size ")
+	}
+	if err != nil {
+		panic("can't read header")
 	}
 	headerLen := binary.LittleEndian.Uint64(buf)
-	n, _ = m.reader.Read(buf)
+	n, _ = m.Read(buf)
 	if n != 8 {
 		panic("can't read nbKeys")
 	}
 	nbKeys := binary.LittleEndian.Uint64(buf)
-	return memtablePartialHeader{
-		reader:    m.reader,
+	return readMemtableMetadata{
+		Reader:    m,
 		headerLen: headerLen,
 		nbKeys:    nbKeys,
 	}
-
 }
 
-type memtablePartialHeader struct {
-	reader    io.Reader
+type readMemtableMetadata struct {
+	io.Reader
 	headerLen uint64
 	nbKeys    uint64
 }
 
-func (m memtablePartialHeader) ReadKeysAndOffsets() memtableHeader {
+func (m readMemtableMetadata) ReadKeysAndOffsets() valuesReader {
 	keyByteLength := 8 * m.nbKeys
 	buf := make([]byte, keyByteLength)
-	n, err := m.reader.Read(buf)
+	n, err := m.Read(buf)
 	if n != int(keyByteLength) || err != nil {
 		panic("can't read keys")
 	}
@@ -57,7 +77,7 @@ func (m memtablePartialHeader) ReadKeysAndOffsets() memtableHeader {
 
 	offsetsByteLength := 4*m.nbKeys + 4
 	buf = make([]byte, offsetsByteLength)
-	n, err = m.reader.Read(buf)
+	n, err = m.Read(buf)
 	if n != int(offsetsByteLength) || err != nil {
 		panic("can't read offsets")
 	}
@@ -66,30 +86,57 @@ func (m memtablePartialHeader) ReadKeysAndOffsets() memtableHeader {
 		offset := binary.LittleEndian.Uint32(buf[i*4 : (i+1)*4])
 		offsets = append(offsets, offset)
 	}
-	return memtableHeader{
-		reader:    m.reader,
+	return valuesReader{
+		reader:    m,
 		headerLen: m.headerLen,
-		keys:      keys,
-		offsets:   offsets,
+		MemtableHeader: MemtableHeader{
+			keys:    keys,
+			offsets: offsets,
+		},
 	}
 }
 
-type memtableHeader struct {
+type valuesReader struct {
+	MemtableHeader
 	reader    io.Reader
 	headerLen uint64
-	keys      []uint64
-	offsets   []uint32
 }
 
-func (m memtableHeader) ReadValues() Memtable {
+func (m valuesReader) ReadValues() Memtable {
 	values, err := ioutil.ReadAll(m.reader)
 	if err != nil {
 		panic("can't read values")
 	}
 	return Memtable{
-		originalKeys: nil,
-		data:         values,
-		keys:         m.keys,
-		offsets:      m.offsets,
+		MemtableHeader: m.MemtableHeader,
+		data:           values,
+	}
+}
+
+func (m valuesReader) MemoryMapValues(f *os.File) MemoryMappedMemtable {
+	fi, err := f.Stat()
+	if err != nil {
+		panic("can't get stats")
+	}
+	offset := int64(m.headerLen)
+	size := int(fi.Size())
+	pageSize := syscall.Getpagesize()
+	multiple := (int(m.headerLen) / pageSize)
+	offset = int64(multiple * pageSize)
+	diff := int64(m.headerLen) - offset
+
+	value, err := syscall.Mmap(int(f.Fd()),
+		offset, size-int(offset),
+		syscall.PROT_WRITE, syscall.MAP_SHARED)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return MemoryMappedMemtable{
+		MemtableHeader: m.MemtableHeader,
+		data:           value,
+		file:           f,
+		offset:         int(diff + 4), // we add the 4 bytes that we used to indicate the header length at the start of the file
 	}
 }

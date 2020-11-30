@@ -1,17 +1,14 @@
 package memtable
 
 import (
-	"math"
 	"sort"
 
 	"github.com/zs-projects/aeroview/mph/farmhash"
 )
 
 type Memtable struct {
-	originalKeys []string
-	keys         []uint64
-	offsets      []uint32
-	data         []byte
+	MemtableHeader
+	data []byte
 }
 
 // FromMap builds a Memtable from a map.
@@ -39,10 +36,11 @@ func FromMap(data map[string][]byte) Memtable {
 	}
 
 	return Memtable{
-		originalKeys: originalKeys,
-		keys:         keys,
-		offsets:      offsets,
-		data:         dataBytes,
+		MemtableHeader: MemtableHeader{
+			keys:    keys,
+			offsets: offsets,
+		},
+		data: dataBytes,
 	}
 }
 
@@ -59,49 +57,9 @@ func (m *Memtable) Get(key string) ([]byte, bool) {
 	return nil, false
 }
 
-func (m *Memtable) slope(lo, hi int) float64 {
-	last := float64(m.keys[hi])
-	first := float64(m.keys[lo])
-	span := float64(len(m.keys))
-	return span / (last - first)
-}
-
-func (m *Memtable) linearSearch(lo, high int, hashedKey uint64) ([]byte, bool) {
-	for i := lo; i <= high; i++ {
-		if hashedKey == m.keys[i] {
-			return m.data[m.offsets[i]:m.offsets[i+1]], true
-		}
+func (m *Memtable) GetUnsafe(key string) ([]byte, bool) {
+	if lo, ok := m.MemtableHeader.findKey(key); ok {
+		return m.data[m.MemtableHeader.offsets[lo]:m.MemtableHeader.offsets[lo+1]], true
 	}
 	return nil, false
-}
-
-func (m *Memtable) GetUnsafe(key string) ([]byte, bool) {
-	hashedKey := farmhash.Hash64(key)
-	lo := 0
-	hi := len(m.keys) - 1
-
-	if len(m.keys) == 0 || hi == -1 {
-		return nil, false
-	}
-	slope := m.slope(lo, hi)
-
-	for m.keys[lo] < hashedKey {
-		midFP := slope * float64(hashedKey-m.keys[lo])
-		mid := lo + int(math.Min(float64(hi-lo-1), midFP))
-
-		if m.keys[mid] < hashedKey {
-			lo = mid + 1
-		} else {
-			hi = mid
-		}
-
-		if mid+64 > hi || mid-64 <= lo {
-			return m.linearSearch(lo, hi, hashedKey)
-		}
-	}
-
-	if m.keys[lo] != hashedKey {
-		return nil, false
-	}
-	return m.data[m.offsets[lo]:m.offsets[lo+1]], true
 }
