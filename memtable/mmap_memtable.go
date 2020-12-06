@@ -14,7 +14,6 @@ type MemoryMappedMemtable struct {
 }
 
 func (m *MemoryMappedMemtable) Get(key string) ([]byte, bool) {
-	unix.MemfdCreate("")
 	if data, ok := m.getUnsafe(key); ok {
 		out := make([]byte, len(data))
 		copy(out, data)
