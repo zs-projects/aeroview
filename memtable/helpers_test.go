@@ -8,7 +8,6 @@ func getSampleMap(size int) map[string][]byte {
 		key := fmt.Sprintf("key-%v", i)
 		value := []byte(fmt.Sprintf("value-%v", i))
 		mp[key] = value
-
 	}
 	return mp
 }

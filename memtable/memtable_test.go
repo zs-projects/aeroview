@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/zs-projects/aeroview/mph/farmhash"
 )
 
 func TestFromMap(t *testing.T) {
@@ -16,9 +15,9 @@ func TestFromMap(t *testing.T) {
 	assert.Equal(t, len(memtable.offsets), size+1)
 	assert.EqualValues(t, memtable.offsets[0], 0)
 	assert.True(t, sort.SliceIsSorted(memtable.keys, func(i, j int) bool { return memtable.keys[i] < memtable.keys[j] }))
-	for idx, key := range memtable.originalKeys {
-		assert.EqualValues(t, farmhash.Hash64(key), memtable.keys[idx])
-	}
+	// for key := range mp {
+	// 	assert.EqualValues(t, farmhash.Hash64(key), memtable.keys[idx])
+	// }
 }
 
 func TestMemtableGet(t *testing.T) {

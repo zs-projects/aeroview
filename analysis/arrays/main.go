@@ -65,5 +65,4 @@ func main() {
 		fmt.Fprintf(w, "nb elements: %v\t%v\t%v\t%.3f\t\n", size, nbBytesVarInt, nbBytesEliasFano, float64(nbBytesVarInt)/float64(nbBytesEliasFano))
 	}
 	w.Flush()
-
 }
