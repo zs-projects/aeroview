@@ -1,7 +1,6 @@
 package memtable
 
 import (
-	"golang.org/x/sys/unix"
 	"os"
 	"syscall"
 )
