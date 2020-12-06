@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"sync"
-	"sync/atomic"
 
 	"github.com/twmb/murmur3"
 	"github.com/zs-projects/aeroview/mph/utils"
@@ -69,98 +68,81 @@ func FromMap(data map[string][]byte, nbWorkers int) Recsplit {
 	}
 	// 1. Assign data to buckets.
 	buckets := utils.AssignToBuckets(partitioner, data, nBuckets)
-	splits, results := makeWorkerPool(nbWorkers, nBuckets)
-	overflows := make(map[int]struct{})
-	for i, b := range buckets {
-		// 2. Check for overflows.
-		if len(b.Keys) > 2000 {
-			// 3. Treat overflows with BDZ ( to be implemented_later.)
-			overflows[i] = struct{}{}
-		} else {
-			// 4. send the bucket to the workers. ( it will be split or brute forced.)
-			rb := recsplitBucket{
-				keys:    b.Keys,
-				parents: []uint32{},
-				sizes:   []uint32{},
-				bucket:  b.OriginalIndex,
-			}
-			splits <- rb
+	splits := make(chan recsplitBucket, nBuckets)
+	results := makeWorkerPool(nbWorkers, nBuckets, splits)
+	for _, b := range buckets {
+		// 4. send the bucket to the workers. ( it will be split or brute forced.)
+		rb := recsplitBucket{
+			keys:   b.Keys,
+			bucket: b.OriginalIndex,
 		}
+		splits <- rb
 	}
+	close(splits)
 	// 5. Collect the finalRecSplitbuckets.
-	fBuckets := make(map[int][]recsplitLeaf, nBuckets)
+	fBuckets := make(map[int]recsplitSubTree, nBuckets)
 	// NOTE: for now this channel is closed nowhere. This will loop forever.
 	for res := range results {
-		if _, ok := fBuckets[res.bucket]; !ok {
-			fBuckets[res.bucket] = make([]recsplitLeaf, 0, 1)
-		}
-		fBuckets[res.bucket] = append(fBuckets[res.bucket], res)
+		fBuckets[res.bucket] = res
 	}
 	// 6. Reconstruct the mph.
-	mph := mphFromRecsplitLeafs(fBuckets, nBuckets, data)
+	mph := mphFromRecsplitLeafs(fBuckets, data)
 	return mph
 }
 
-func makeWorkerPool(nbWokers, initialWorkCount int) (chan<- recsplitBucket, <-chan recsplitLeaf) {
+func makeWorkerPool(nbWokers, nbBuckets int, splits <-chan recsplitBucket) <-chan recsplitSubTree {
 	var wg sync.WaitGroup
-	work := int64(initialWorkCount)
-	// Buffering in the channels here is important to avoid deadlocks
-	// Given the pattern of concurrency we chose.
-	// IT'S UGLY....
-	splits := make(chan recsplitBucket, 100000*nbWokers+1)
-	results := make(chan recsplitLeaf, 100000*nbWokers+1)
+	results := make(chan recsplitSubTree, nbBuckets)
 	for i := 0; i < nbWokers; i++ {
 		wg.Add(1)
-		go recsplitWorker(&wg, &work, splits, results)
+		go recsplitWorker(&wg, splits, results)
 	}
-	go monitorWorkAndCloseChannels(&wg, &work, splits, results)
-	return splits, results
-}
 
-func monitorWorkAndCloseChannels(wg *sync.WaitGroup, work *int64, splits chan recsplitBucket, results chan recsplitLeaf) {
 	go func() {
-		for {
-			if atomic.LoadInt64(work) == 0 {
-				close(splits)
-				break
-			}
-		}
 		wg.Wait()
 		close(results)
 	}()
+	return results
 }
 
-func recsplitWorker(wg *sync.WaitGroup, workCount *int64, splits chan recsplitBucket, results chan<- recsplitLeaf) {
-	for b := range splits {
-		if len(b.keys) <= 5 {
-			r := b.bruteForceMPH()
-			b.parents = append(b.parents, uint32(r))
-			b.sizes = append(b.sizes, uint32(len(b.keys)))
-			results <- recsplitLeaf{b}
-			atomic.AddInt64(workCount, -1)
-		} else {
-			left, right := b.split()
-			atomic.AddInt64(workCount, +1)
-			splits <- right
-			splits <- left
-		}
+func recsplitWorker(wg *sync.WaitGroup, buckets <-chan recsplitBucket, results chan<- recsplitSubTree) {
+	for b := range buckets {
+		tree := PartitionBucket(b)
+		results <- recsplitSubTree{recsplitBucket: b, Node: tree}
 	}
 	wg.Done()
 }
 
-func mphFromRecsplitLeafs(res map[int][]recsplitLeaf, nbBuckets int, values map[string][]byte) Recsplit {
+func PartitionBucket(b recsplitBucket) *Node {
+	if nbKeys := len(b.keys); nbKeys <= 5 {
+		r := b.bruteForceMPH()
+		return &Node{
+			Left:   nil,
+			Right:  nil,
+			R:      r,
+			nbKeys: nbKeys,
+		}
+	} else {
+		r, left, right := b.split()
+		return &Node{
+			Left:   PartitionBucket(left),
+			Right:  PartitionBucket(right),
+			R:      r,
+			nbKeys: nbKeys,
+		}
+	}
+}
+
+func mphFromRecsplitLeafs(res map[int]recsplitSubTree, values map[string][]byte) Recsplit {
+	nbBuckets := len(res)
 	mph := Recsplit{
 		keys:    make([]CompactFBTree, nbBuckets),
 		values:  make([][]byte, len(values)),
-		cumSums: make([]int, 1, nbBuckets),
+		cumSums: make([]int, 1),
 	}
 	cumSum := 0
 	for bucket, leafs := range res {
-		tleafs := make([]TreeLeaf, 0, len(leafs))
-		for _, leaf := range leafs {
-			tleafs = append(tleafs, leaf)
-		}
-		mph.keys[bucket] = FromFBTree(MakeFBTreeFromLeafs(tleafs))
+		mph.keys[bucket] = MakeFbTreeFromRecSplitSubTree(leafs)
 	}
 	for _, value := range mph.keys {
 		_, nbKeys := value.node(value.Root())
@@ -174,56 +156,25 @@ func mphFromRecsplitLeafs(res map[int][]recsplitLeaf, nbBuckets int, values map[
 }
 
 type recsplitBucket struct {
-	keys    []string
-	parents []uint32
-	sizes   []uint32
-	isRight []bool
-	bucket  int
+	keys   []string
+	bucket int
 }
-type recsplitLeaf struct {
+type recsplitSubTree struct {
 	recsplitBucket
+	*Node
 }
 
-func (r recsplitLeaf) Values() []FBValue {
-	vals := make([]FBValue, 0, len(r.parents))
-	for i, v := range r.parents {
-		vals = append(vals, FBValue{NbKeys: int(r.sizes[i]), R: int(v)})
-	}
-	return vals
-}
-func (r recsplitLeaf) Path() []bool {
-	return r.isRight
-}
-
-func (b recsplitBucket) split() (recsplitBucket, recsplitBucket) {
+func (b recsplitBucket) split() (int, recsplitBucket, recsplitBucket) {
 	r, lKeys, rKeys := b.partitionKeys()
 	left := recsplitBucket{
-		keys:    lKeys,
-		parents: make([]uint32, len(b.parents)),
-		sizes:   make([]uint32, len(b.sizes)),
-		isRight: make([]bool, len(b.isRight)),
-		bucket:  b.bucket,
+		keys:   lKeys,
+		bucket: b.bucket,
 	}
 	right := recsplitBucket{
-		keys:    rKeys,
-		parents: make([]uint32, len(b.parents)),
-		sizes:   make([]uint32, len(b.sizes)),
-		isRight: make([]bool, len(b.isRight)),
-		bucket:  b.bucket,
+		keys:   rKeys,
+		bucket: b.bucket,
 	}
-	copy(right.parents, b.parents)
-	copy(right.sizes, b.sizes)
-	copy(right.isRight, b.isRight)
-	copy(left.parents, b.parents)
-	copy(left.sizes, b.sizes)
-	copy(left.isRight, b.isRight)
-	right.parents = append(right.parents, uint32(r))
-	left.parents = append(left.parents, uint32(r))
-	right.sizes = append(right.sizes, uint32(len(b.keys)))
-	left.sizes = append(left.sizes, uint32(len(b.keys)))
-	right.isRight = append(right.isRight, true)
-	left.isRight = append(left.isRight, false)
-	return left, right
+	return r, left, right
 }
 
 func (b recsplitBucket) partitionKeys() (int, []string, []string) {
