@@ -35,10 +35,9 @@ func TestFromMap(t *testing.T) {
 
 func TestMPHFromRecsplitLeafs(t *testing.T) {
 	var wg sync.WaitGroup
-	workCount := int64(1)
 	nbKeys := 5000
-	splits := make(chan recsplitBucket, nbKeys)
-	results := make(chan recsplitLeaf, nbKeys)
+	splits := make(chan recsplitBucket)
+	results := make(chan recsplitSubTree)
 	keys := make([]string, 0)
 	mp := make(map[string][]byte, nbKeys)
 	for i := 0; i < nbKeys; i++ {
@@ -47,23 +46,19 @@ func TestMPHFromRecsplitLeafs(t *testing.T) {
 		keys = append(keys, data)
 	}
 	b := recsplitBucket{
-		keys:    keys,
-		parents: []uint32{},
-		isRight: []bool{},
-		bucket:  0,
+		keys:   keys,
+		bucket: 0,
 	}
-	splits <- b
 	wg.Add(1)
-	go monitorWorkAndCloseChannels(&wg, &workCount, splits, results)
-	go recsplitWorker(&wg, &workCount, splits, results)
-	res := make(map[int][]recsplitLeaf, 0)
-	for r := range results {
-		if _, ok := res[r.bucket]; !ok {
-			res[r.bucket] = make([]recsplitLeaf, 0, 1)
-		}
-		res[r.bucket] = append(res[r.bucket], r)
-	}
-	mph := mphFromRecsplitLeafs(res, 1, mp)
+	go recsplitWorker(&wg, splits, results)
+	splits <- b
+	close(splits)
+	res := make(map[int]recsplitSubTree, 0)
+	r := <-results
+	res[r.bucket] = r
+	wg.Wait()
+	close(results)
+	mph := mphFromRecsplitLeafs(res, mp)
 	collisions := make([]bool, len(keys))
 	for key, value := range mp {
 		i := mph.GetKey(key)
@@ -81,77 +76,27 @@ func TestMPHFromRecsplitLeafs(t *testing.T) {
 	}
 }
 
-func TestRecsplitWorker(t *testing.T) {
-	var wg sync.WaitGroup
-	workCount := int64(1)
-	splits := make(chan recsplitBucket, 3)
-	results := make(chan recsplitLeaf, 3)
-	b := recsplitBucket{
-		keys:    []string{"toto", "tata", "titi", "test", "tardif", "toff", "tiff", "tall", "health", "append", "count"},
-		parents: []uint32{5, 7},
-		sizes:   []uint32{44, 22},
-		isRight: []bool{true, false},
-		bucket:  3,
-	}
-	splits <- b
-	wg.Add(1)
-	go monitorWorkAndCloseChannels(&wg, &workCount, splits, results)
-	go recsplitWorker(&wg, &workCount, splits, results)
-	count := 0
-	for r := range results {
-		count++
-		if len(r.keys) > 5 {
-			t.Errorf("Non leaf node %v was sent with the results.", r)
-		}
-		if len(r.parents) != len(r.sizes) {
-			t.Errorf("parent and size slices ar of different length for %v", r)
-		}
-		collisions := make([]bool, len(r.keys))
-		if checkForCollisions(uint64(r.parents[len(r.parents)-1]), r.keys, collisions) {
-			t.Errorf("checkCollisions Failed for %v because %v", r, collisions)
-		}
-	}
-	if count != 3 {
-		t.Errorf("Excepcted two results.")
-	}
-}
-
 func TestSplit(t *testing.T) {
 	keys := []string{"toto", "tata", "titi", "test", "tardif", "tiff", "tall", "health", "append"}
 	s := len(keys) / 2
 	b := recsplitBucket{
-		keys:    keys,
-		parents: []uint32{5, 7},
-		sizes:   []uint32{44, 22},
-		isRight: []bool{true, false},
-		bucket:  3,
+		keys:   keys,
+		bucket: 3,
 	}
-	l, r := b.split()
-	if l.parents[2] != r.parents[2] {
-		t.Errorf("Last element in parents should be the same.")
-	}
-	if l.sizes[2] != r.sizes[2] {
-		t.Errorf("Last element in parents should be the same.")
-	}
-	if l.isRight[2] {
-		t.Errorf("isRight value is wrong for the left bucket.")
-	}
+	R, l, r := b.split()
 	if l.bucket != b.bucket {
 		t.Errorf("left bucket was not preserved.")
-	}
-	if !r.isRight[2] {
-		t.Errorf("isRight value is wrong for the right bucket")
 	}
 	if r.bucket != b.bucket {
 		t.Errorf("right bucket was not preserved.")
 	}
 	for _, key := range l.keys {
-		if hash(key, uint64(l.parents[2]))%len(b.keys) >= s {
+		if hash(key, uint64(R))%len(b.keys) >= s {
 			t.Errorf("%v should be in the right partition", key)
 		}
 	}
 	for _, key := range r.keys {
-		if hash(key, uint64(r.parents[2]))%len(b.keys) < s {
+		if hash(key, uint64(R))%len(b.keys) < s {
 			t.Errorf("%v should be in the left partition", key)
 		}
 	}
@@ -159,8 +104,7 @@ func TestSplit(t *testing.T) {
 
 func TestPartitionKeys(t *testing.T) {
 	b := recsplitBucket{
-		keys:    []string{"toto", "tata", "titi", "test", "tardif", "toff", "tiff", "tall", "health", "append", "count"},
-		parents: nil,
+		keys: []string{"toto", "tata", "titi", "test", "tardif", "toff", "tiff", "tall", "health", "append", "count"},
 	}
 	s := len(b.keys) / 2
 	r, lKeys, rKeys := b.partitionKeys()
@@ -209,8 +153,7 @@ func haveCommonElements(setA, setB map[string]struct{}) bool {
 
 func TestBruteForceMPH(t *testing.T) {
 	b := recsplitBucket{
-		keys:    []string{"toto", "tata", "titi", "test", "tardif"},
-		parents: nil,
+		keys: []string{"toto", "tata", "titi", "test", "tardif"},
 	}
 	r := b.bruteForceMPH()
 	collisions := make([]bool, len(b.keys))

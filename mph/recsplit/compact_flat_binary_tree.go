@@ -15,17 +15,40 @@ func (c CompactFBTree) SizeInBytes() int {
 	return len(c.nodesR)*8 + len(c.nodesNBKeys)*8 + c.structure.SizeInBytes()
 }
 
-func FromFBTree(u FBTree) CompactFBTree {
+func MakeFbTreeFromRecSplitSubTree(rst recsplitSubTree) CompactFBTree {
+	queue := []*Node{rst.Node}
+	nodesNBKeys := []int{rst.nbKeys}
+	nodesR := []int{rst.R}
+	cur := 0
 	q := bits.MakeQueue()
-	nodesR, nodesNBKeys := compressStructure(&q, &u)
-	b := q.Vector()
-	pc := rank.MakePopCount(b)
+	for cur < len(queue) {
+		current := queue[cur]
+		if current.Left != nil {
+			q.PushBack(1)
+			queue = append(queue, current.Left)
+			nodesNBKeys = append(nodesNBKeys, current.Left.nbKeys)
+			nodesR = append(nodesR, current.Left.R)
+		} else {
+			q.PushBack(0)
+		}
+		if current.Right != nil {
+			q.PushBack(1)
+			queue = append(queue, current.Right)
+			nodesNBKeys = append(nodesNBKeys, current.Right.nbKeys)
+			nodesR = append(nodesR, current.Right.R)
+		} else {
+			q.PushBack(0)
+		}
+		cur++
+	}
+	structure := rank.MakePopCount(q.Vector())
 	return CompactFBTree{
 		nodesNBKeys: nodesNBKeys,
+		structure:   structure,
 		nodesR:      nodesR,
-		structure:   pc,
 	}
 }
+
 func (c CompactFBTree) Root() int {
 	return 0
 }
@@ -44,39 +67,6 @@ func (c CompactFBTree) nodeHasLeftChild(offset int) bool {
 
 func (c CompactFBTree) nodeHasRightChild(offset int) bool {
 	return c.structure.Get(2*offset+1) == 1
-}
-
-func compressStructure(q *bits.Queue, u *FBTree) ([]int, []int) {
-	nodesQueue := make([]*FBNode, 0)
-	nodesQueue = append(nodesQueue, u.Root())
-	nodesR := make([]int, 0)
-	nodesNBKeys := make([]int, 0)
-	nodesR = append(nodesR, u.nodes[0].R)
-	nodesNBKeys = append(nodesNBKeys, u.nodes[0].NbKeys)
-	i := 0
-	for len(nodesQueue) > i {
-		node := nodesQueue[i]
-		i++
-		if u.nodeHasLeftChild(*node) {
-			q.PushBack(1)
-			left := u.LeftChild(*node)
-			nodesQueue = append(nodesQueue, left)
-			nodesNBKeys = append(nodesNBKeys, u.nodes[left.offset].NbKeys)
-			nodesR = append(nodesR, u.nodes[left.offset].R)
-		} else {
-			q.PushBack(0)
-		}
-		if u.nodeHasRightChild(*node) {
-			q.PushBack(1)
-			right := u.RightChild(*node)
-			nodesQueue = append(nodesQueue, right)
-			nodesR = append(nodesR, u.nodes[right.offset].R)
-			nodesNBKeys = append(nodesNBKeys, u.nodes[right.offset].NbKeys)
-		} else {
-			q.PushBack(0)
-		}
-	}
-	return nodesR, nodesNBKeys
 }
 
 func (c CompactFBTree) node(offset int) (r, nbKeys int) {
