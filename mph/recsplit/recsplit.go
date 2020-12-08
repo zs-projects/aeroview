@@ -18,7 +18,7 @@ const (
 type Recsplit struct {
 	values [][]byte
 	// One binary tree per bucket.
-	keys    []CompactFBTree
+	keys    []RecsplitStree
 	cumSums []int
 }
 
@@ -136,7 +136,7 @@ func PartitionBucket(b recsplitBucket) *Node {
 func mphFromRecsplitLeafs(res map[int]recsplitSubTree, values map[string][]byte) Recsplit {
 	nbBuckets := len(res)
 	mph := Recsplit{
-		keys:    make([]CompactFBTree, nbBuckets),
+		keys:    make([]RecsplitStree, nbBuckets),
 		values:  make([][]byte, len(values)),
 		cumSums: make([]int, 1),
 	}
