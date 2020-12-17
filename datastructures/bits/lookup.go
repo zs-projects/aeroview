@@ -6,6 +6,7 @@ import (
 
 type LookupTable8 = [256]uint8
 
+// Make8BitLookup creates an 8 bit wide lookup table
 func Make8BitLookup() LookupTable8 {
 	var lookup [256]uint8
 	for i := 0; i <= 255; i++ {

@@ -62,7 +62,6 @@ linters:
     - vet
     - errcheck
     - exhaustive
-    - gochecknoinits
     - gocritic
     - gofmt
     - goimports

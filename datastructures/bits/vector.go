@@ -4,7 +4,8 @@ package bits
 const BLOCKSIZE = 64
 
 // Vector represent a vector of bits.
-// bits are represented from right to left ( the low bit of the first uint64 is the first bit of the Vector )
+// bits are represented from right to left
+// ( the low bit of the first uint64 is the first bit of the Vector )
 type Vector []uint64
 
 func NewVector(size int) *Vector {
