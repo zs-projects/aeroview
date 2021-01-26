@@ -44,13 +44,13 @@ using the example below. Later, we will present a generalization.
 				  /   \
 				 /     \
 				7       8
-			   / \     / \
-	          /   \   /   \
-			 3     x 6    11
-			/ \     / \   / \
-		   x   9   7   x 15  x
-			  / \       / \
-			 x   4     x  17
+			       / \     / \
+			      /   \   /   \
+			     3     x 6    11
+			    / \     / \   / \
+		           x   9   7   x 15  x
+			  / \           / \
+			 x   4         x  17
 			    / \
 			   2   x
 ```
