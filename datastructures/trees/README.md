@@ -39,7 +39,7 @@ Let's consider an example, we will build an intuition about how to preserve the 
 using the example below. Later, we will present a generalization. 
  
 ```
-					5
+                                    5
 				   / \
 				  /   \
 				 /     \
