@@ -9,5 +9,4 @@ require (
 	github.com/pierrec/lz4 v2.6.0+incompatible
 	github.com/stretchr/testify v1.6.1
 	github.com/twmb/murmur3 v1.1.3
-	golang.org/x/sys v0.0.0-20201126233918-771906719818 
 )
